@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchEditais } from "../../services/edital";
+import { fetchEditais } from "../../services/editais";
 import Edital from "./EditalCard";
 import "./EditalStyle.css";
 

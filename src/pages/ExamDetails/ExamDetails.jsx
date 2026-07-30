@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchExam } from '../../services/examData';
+import { fetchExams } from '../../services/exams';
 import './ExamDetails.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,7 +16,7 @@ function Exam() {
   const [userAnswers, setUserAnswers] = useState([]);
 
   useEffect(() => {
-    fetchExam()
+    fetchExams()
       .then((data) => {
         setExamData(data);
         if (data) {
