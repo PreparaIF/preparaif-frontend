@@ -69,39 +69,38 @@
   margin-bottom: 24px;
 }
 
-.editais-carousel {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding-bottom: 16px;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+.results {
+  grid-column: 1 / -1;
+  font-family: "Inter", sans-serif;
+  color: #5c6b63;
+  text-align: center;
+  padding: 32px 0;
 }
 
-.editais-carousel::-webkit-scrollbar {
-  height: 6px;
-}
-
-.editais-carousel::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
+.editais-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 24px 32px;
 }
 
 .edital-card {
-  width: 100%;
-  min-width: 0;
-  background: var(--color-surface);
-  padding: 22px;
-  border-radius: var(--radius-card);
-  box-shadow: 0 4px 14px rgba(27, 42, 34, 0.06);
-  border: 1px solid #EFEEE6;
-  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
+  background: var(--color-surface);
+  padding: 22px;
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(27, 42, 34, 0.06);
+  border: 1px solid #EFEEE6;
   text-align: left;
   appearance: none;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .edital-card:hover {
@@ -142,47 +141,4 @@
 .edital-item {
   flex: 0 0 clamp(240px, 82vw, 320px);
   max-width: 100%;
-}
-
-@media (max-width: 480px) {
-  .editais {
-    padding: 24px 12px;
-  }
-
-  .edital-item {
-    flex-basis: 88vw;
-  }
-
-  .edital-card {
-    padding: 16px;
-  }
-}
-
-@media (min-width: 768px) {
-  .editais {
-    padding: 40px 32px;
-  }
-
-  .editais-carousel {
-    gap: 20px;
-  }
-
-  .edital-item {
-    flex-basis: 300px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .editais-carousel {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    overflow-x: visible;
-    padding-bottom: 0;
-    scroll-snap-type: none;
-  }
-
-  .edital-item {
-    flex: initial;
-  }
 }

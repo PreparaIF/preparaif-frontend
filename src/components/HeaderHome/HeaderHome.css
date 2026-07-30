@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Inter:wght@400;500;600&display=swap");
 
 .header-container {
   position: relative;
   overflow: hidden;
-  padding: 72px 24px 56px;
+  padding: 16px 24px 56px;
   text-align: center;
   justify-content: center;
   width: 100%;
@@ -18,30 +18,29 @@
 
 .hero-subtitle {
   display: inline-block;
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: #0F7A38;
-  background: #E6F5E9;
-  border: 1px solid #BFE6C8;
+  color: #0f7a38;
+  background: #e6f5e9;
+  border: 1px solid #bfe6c8;
   padding: 8px 18px;
   border-radius: 999px;
   margin: 0 0 20px;
 }
 
 .hero-title {
-  font-family: 'Baloo 2', sans-serif;
+  font-family: "Baloo 2", sans-serif;
   font-weight: 700;
   font-size: 34px;
   line-height: 1.35;
-  color: #1B2A22;
+  color: #1b2a22;
   margin: 0;
 }
 
 .highlight-green {
   position: relative;
-  color: #0F7A38;
+  color: #0f7a38;
   white-space: nowrap;
 }
 
@@ -52,7 +51,7 @@
   right: -2px;
   bottom: 2px;
   height: 10px;
-  background: #FFC93C;
+  background: #ffc93c;
   opacity: 0.55;
   z-index: -1;
   border-radius: 4px;
@@ -66,46 +65,38 @@
   gap: 12px;
   max-width: 75%;
   margin: 0 auto;
-  background: #FFFFFF;
-  border: 2px solid #E2E8DD;
+  background: #ffffff;
+  border: 2px solid #e2e8dd;
   border-radius: 999px;
   padding: 14px 24px;
   box-shadow: 0 6px 20px rgba(27, 42, 34, 0.08);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .search-container:focus-within {
-  border-color: #16A34A;
+  border-color: #16a34a;
   box-shadow: 0 8px 24px rgba(22, 163, 74, 0.18);
 }
 
 .search-icon {
   flex-shrink: 0;
-  color: #5C6B63;
+  color: #5c6b63;
 }
 
 .search-input {
   flex: 1;
   border: none;
   outline: none;
-  font-family: 'Inter', sans-serif;
+
   font-size: 15px;
   font-weight: 500;
-  color: #1B2A22;
+  color: #1b2a22;
   background: transparent;
 }
 
 .search-input::placeholder {
-  color: #9AA69C;
+  color: #9aa69c;
   font-weight: 400;
-}
-
-@media (max-width: 640px) {
-  .hero-title {
-    font-size: 24px;
-  }
-
-  .header-container {
-    padding: 48px 16px 40px;
-  }
 }

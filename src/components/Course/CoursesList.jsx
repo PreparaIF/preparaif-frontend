@@ -93,7 +93,7 @@ export default function CoursesList({ searchTerm = "" }) {
 
       <div className="courses-container">
         {filteredCourses.length === 0 && (
-          <p className="no-results">Nenhum curso encontrado.</p>
+          <p className="no-results">Nenhum curso foi encontrado.</p>
         )}
         {visibleCourses.map((course) => (
           <CourseCard

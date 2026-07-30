@@ -20,8 +20,11 @@ export default function EditaisList() {
         <h2 className="title">Editais Anteriores</h2>
       </div>
 
-      <div className="editais-carousel">
-        {loading && <p>Carregando editais...</p>}
+      <div className="editais-container">
+        {loading && <p className="results">Carregando editais...</p>}
+        {!loading && editais.length === 0 && (
+          <p className="results">Nenhum edital foi encontrado.</p>
+        )}
         {!loading &&
           editais.map((edital) => (
             <div className="edital-item" key={edital.id}>
