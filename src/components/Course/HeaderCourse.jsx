@@ -1,28 +1,12 @@
-import { useNavigate } from "react-router-dom";
 import "./CourseStyle.css";
+import ButtonVoltar from "../Utils/ButtonVoltar";
 
 function HeaderCourse({ title, image }) {
-  const navigate = useNavigate();
   return (
     <div className="header-course">
       <header className="details-header">
         <div className="header-text-content">
-          <button className="btn-voltar" onClick={() => navigate(-1)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            Voltar
-          </button>
+          <ButtonVoltar />
           <div className="header-text-content-inner">
             <span className="source-info">
               Informações extraídas do Portal do Ifal
