@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import './CourseCard.css';
+import './CourseStyle.css';
 
 const FALLBACK_IMAGE =
   "data:image/svg+xml;utf8," +
@@ -33,7 +33,7 @@ export default function CourseCard({ institute, course }) {
     };
 
     return (
-        <div className="course-container">
+        <div className="course-card">
             <div className="course-image-wrapper">
                 <img
                     className="course-image"

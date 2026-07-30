@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './CourseDetails.css';
-import HeaderCourse from '../components/HeaderCourse';
-import { fetchCourses } from '../services/courses';
+import { HeaderCourse } from '../../components';
+import { fetchCourses } from '../../services/courses';
 
 function CourseDetails() {
   const [cursoAtual, setCursoAtual] = useState(null);
