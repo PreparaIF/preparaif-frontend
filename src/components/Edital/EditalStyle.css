@@ -142,3 +142,50 @@
   flex: 0 0 clamp(240px, 82vw, 320px);
   max-width: 100%;
 }
+
+@media (min-width: 1024px) {
+  .editais-carousel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    overflow-x: visible;
+    padding-bottom: 0;
+    scroll-snap-type: none;
+  }
+
+  .edital-item {
+    flex: initial;
+  }
+}
+
+@media (max-width: 768px) {
+  .edital-main-title {
+    font-size: 1.9rem;
+  }
+
+  .editais {
+    padding: 40px 32px;
+  }
+
+  .editais-carousel {
+    gap: 20px;
+  }
+
+  .edital-item {
+    flex-basis: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .editais {
+    padding: 24px 12px;
+  }
+
+  .edital-item {
+    flex-basis: 88vw;
+  }
+
+  .edital-card {
+    padding: 16px;
+  }
+}

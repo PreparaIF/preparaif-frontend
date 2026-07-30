@@ -100,3 +100,13 @@
   color: #9aa69c;
   font-weight: 400;
 }
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .header-container {
+    padding: 48px 16px 40px;
+  }
+}
