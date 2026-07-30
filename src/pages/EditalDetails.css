@@ -1,0 +1,152 @@
+.edict-page-container {
+  width: 100%;
+  border-radius: var(--radius-card);
+  margin: 0 auto;
+  padding: 60px 40px;
+  background-color: var(--color-bg);
+}
+
+.edict-back {
+  margin-bottom: 50px;
+}
+
+.edict-content-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  justify-content: space-between;
+}
+
+.edict-right-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.edict-title {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  color: var(--color-ink);
+  margin: 10px 0 20px 0;
+  font-weight: 700;
+}
+
+.edict-image {
+  width: 100%;
+  flex-grow: 1;
+  min-height: 350px;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  margin-top: 30px;
+}
+
+.edict-text-content p {
+  color: var(--color-muted);
+  line-height: 1.7;
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+.edict-text-content h4 {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  margin-top: 32px;
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.edict-text-content ul {
+  color: var(--color-muted);
+  line-height: 1.7;
+  font-size: 0.95rem;
+  padding-left: 20px;
+}
+
+.edict-text-content li {
+  margin-bottom: 8px;
+}
+
+.action-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-card);
+  padding: 30px;
+  margin-top: 50px;
+  box-shadow: 0 4px 14px rgba(27, 42, 34, 0.06);
+  border: 1px solid #EFEEE6;
+}
+
+.action-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.icone-instituto {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+}
+
+.nome-instituto {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.action-card-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--color-ink);
+  font-weight: 700;
+  margin: 0 0 30px 0;
+}
+
+.action-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.course-info {
+  color: var(--color-muted-light);
+  font-size: 0.8rem;
+}
+
+.course-button {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.course-button:hover {
+  background: var(--color-primary-dark);
+}
+
+@media (max-width: 768px) {
+  .edict-page-container {
+    padding: 32px 20px;
+  }
+
+  .edict-content-split {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .edict-title {
+    font-size: 1.8rem;
+  }
+}

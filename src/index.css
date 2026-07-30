@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #FFFDF7;
+  --color-surface: #FFFFFF;
+  --color-primary: #16A34A;
+  --color-primary-dark: #0F7A38;
+  --color-primary-light: #E6F5E9;
+  --color-primary-border: #BFE6C8;
+  --color-accent: #FF6B4A;
+  --color-accent-dark: #E14E2E;
+  --color-yellow: #FFC93C;
+  --color-ink: #1B2A22;
+  --color-muted: #5C6B63;
+  --color-muted-light: #9AA69C;
+  --color-border: #E2E8DD;
+
+  --font-display: 'Baloo 2', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --radius-card: 20px;
+  --radius-pill: 999px;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-bg);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}

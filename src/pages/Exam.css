@@ -1,0 +1,327 @@
+.progress-bar-container {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto 24px auto;
+  padding-top: 20px;
+}
+
+.progress-step {
+  flex: 1;
+  height: 6px;
+  background-color: var(--color-border);
+  border-radius: var(--radius-pill);
+  transition: background-color 0.3s ease;
+}
+
+.progress-step.active {
+  background-color: var(--color-primary);
+}
+
+.exam-page-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+}
+
+.exam-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.btn-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 20px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-voltar:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
+.intro-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.intro-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--color-ink);
+  font-weight: 700;
+  margin-bottom: 40px;
+  line-height: 1.4;
+}
+
+.btn-green-large {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 16px 48px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-green-large:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn-green-large:disabled {
+  background-color: var(--color-border);
+  color: var(--color-muted-light);
+  cursor: not-allowed;
+}
+
+.question-content {
+  margin-top: 20px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.question-text {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--color-ink);
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 40px;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.option-item.selected {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.option-item input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 16px;
+  accent-color: var(--color-primary);
+}
+
+.option-text {
+  color: var(--color-ink);
+  font-size: 1rem;
+}
+
+.exam-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 50px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-gray-large {
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 16px 48px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.btn-gray-large:hover {
+  border-color: var(--color-primary);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(27, 42, 34, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background-color: var(--color-surface);
+  padding: 50px 40px;
+  border-radius: var(--radius-card);
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(27, 42, 34, 0.18);
+  max-width: 500px;
+  width: 90%;
+  animation: modalAparecer 0.2s ease-out;
+}
+
+.modal-box h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--color-ink);
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 40px;
+  line-height: 1.3;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.progress-wrapper {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.progress-inner {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.percentage-text {
+  color: white;
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 700;
+}
+
+.results-text-container {
+  margin-bottom: 30px;
+}
+
+.results-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--color-ink);
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.results-subtitle {
+  font-size: 1.1rem;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.score-boxes {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.score-box {
+  padding: 14px 28px;
+  border-radius: var(--radius-pill);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.score-box.correct {
+  background-color: var(--color-primary);
+}
+
+.score-box.wrong {
+  background-color: var(--color-accent);
+}
+
+.action-buttons-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.btn-outline-large {
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 16px 48px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.btn-outline-large:hover {
+  border-color: var(--color-primary);
+}
+
+@keyframes modalAparecer {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 480px) {
+  .modal-buttons {
+    flex-direction: column;
+  }
+  .modal-buttons button {
+    width: 100%;
+  }
+  .intro-title {
+    font-size: 1.6rem;
+  }
+}

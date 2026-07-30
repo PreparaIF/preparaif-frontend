@@ -1,0 +1,161 @@
+.last-exams-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.last-exams-header {
+  margin-bottom: 40px;
+}
+
+.last-exams-page-title {
+  font-size: 2rem;
+  color: #555;
+  margin-top: 30px;
+}
+
+.exams-carousel-container {
+  display: flex;
+  gap: 30px;
+  overflow-x: auto;
+  padding-bottom: 40px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.exams-carousel-container::-webkit-scrollbar {
+  height: 8px;
+}
+.exams-carousel-container::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 4px;
+}
+
+.last-exam-card {
+  min-width: 450px; 
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  border: 1px solid #eaeaea;
+  scroll-snap-align: start;
+}
+
+.exam-card-cover {
+  position: relative; 
+  width: 100%;
+  height: 260px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.8); 
+}
+
+.cover-text-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+  width: 80%;
+}
+
+.cover-subtitle {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 300;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.cover-title {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.exam-year-badge {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #555;
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.exam-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.footer-info-group {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  margin-left: 16px;
+}
+
+.info-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: #a0a0a0;
+  margin-top: 2px;
+}
+
+.btn-fazer-prova {
+  background-color: #e5e5e5;
+  color: #666;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-fazer-prova:hover {
+  background-color: #d4d4d4;
+}
+
+@media (max-width: 600px) {
+  .last-exam-card {
+    min-width: 320px; 
+  }
+  .exam-card-footer {
+    flex-wrap: wrap; 
+    gap: 15px;
+  }
+  .btn-fazer-prova {
+    width: 100%; 
+  }
+}
