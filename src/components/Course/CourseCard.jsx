@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import './CourseCard.css';
+import './CourseStyle.css';
 
 const FALLBACK_IMAGE =
   "data:image/svg+xml;utf8," +

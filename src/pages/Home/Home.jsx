@@ -1,7 +1,5 @@
 import { useState } from "react";
-import HeaderHome from "../components/HeaderHome";
-import CoursesList from "../components/CoursesList";
-import EditaisList from "../components/EditaisList";
+import {HeaderHome, CoursesList, EditaisList} from "../../components";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");

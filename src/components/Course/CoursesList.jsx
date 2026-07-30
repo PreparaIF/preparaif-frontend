@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { fetchCourses } from "../services/courses";
+import { fetchCourses } from "../../services/courses";
 import CourseCard from "./CourseCard";
-import "./CourseCard.css";
+import "./CourseStyle.css";
 
 const PAGE_SIZE = 6;
 
@@ -51,33 +51,42 @@ export default function CoursesList({ searchTerm = "" }) {
   const visibleCourses = filteredCourses.slice(0, visibleCount);
   const hasMore = visibleCount < filteredCourses.length;
 
-  useEffect(() => {
+  const handleFilterChange = (setter) => (e) => {
+    setter(e.target.value);
     setVisibleCount(PAGE_SIZE);
-  }, [searchTerm, turnoFilter, campusFilter, tipoFilter]);
+  };
 
   if (loading) return <p>Carregando cursos...</p>;
 
   return (
     <>
       <div className="courses-filters">
-        <select value={tipoFilter} onChange={(e) => setTipoFilter(e.target.value)}>
+        <select value={tipoFilter} onChange={handleFilterChange(setTipoFilter)}>
           <option value="">Todos os tipos</option>
           {tipos.map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
 
-        <select value={turnoFilter} onChange={(e) => setTurnoFilter(e.target.value)}>
+        <select
+          value={turnoFilter} onChange={handleFilterChange(setTurnoFilter)}>
           <option value="">Todos os turnos</option>
           {turnos.map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
 
-        <select value={campusFilter} onChange={(e) => setCampusFilter(e.target.value)}>
+        <select
+          value={campusFilter} onChange={handleFilterChange(setCampusFilter)}>
           <option value="">Todos os campi</option>
           {campuses.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
       </div>

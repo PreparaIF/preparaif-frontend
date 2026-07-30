@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { fetchExam } from '../services/examData';
-import './Exam.css';
+import { fetchExam } from '../../services/examData';
+import './ExamDetails.css';
 import { useNavigate } from 'react-router-dom';
 
 function Exam() {

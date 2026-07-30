@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { fetchEditais } from "../services/edital";
+import { fetchEditais } from "../../services/edital";
 import Edital from "./EditalCard";
-import "./EditalCard.css";
+import "./EditalStyle.css";
 
 export default function EditaisList() {
   const [editais, setEditais] = useState([]);
