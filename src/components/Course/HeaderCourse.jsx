@@ -18,7 +18,6 @@ function HeaderCourse({ title, image }) {
               - 4min de leitura
             </p>
           </div>
-          <section></section>
         </div>
 
         <div className="header-image-content">

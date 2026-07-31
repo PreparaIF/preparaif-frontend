@@ -1,40 +1,12 @@
+/* ═══════════════════════════════════════
+   Header Edital (detalhe)
+   ═══════════════════════════════════════ */
+
 .header-edital {
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-bottom: 32px;
-}
-
-.btn-voltar {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-muted);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 10px 20px;
-  margin-bottom: 40px;
-  width: fit-content;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.btn-voltar:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary-dark);
-}
-
-.source-info {
-  display: block;
-  color: var(--color-muted-light);
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 8px;
 }
 
 .edital-main-title {
@@ -46,22 +18,15 @@
   margin: 0 0 20px 0;
 }
 
-.read-time-info {
-  color: var(--color-muted-light);
-  font-family: var(--font-body);
-  font-size: 13px;
-}
-
-.green-highlight {
-  color: var(--color-primary-dark);
-  font-weight: 600;
-}
+/* ═══════════════════════════════════════
+   Seção Editais (lista na Home)
+   ═══════════════════════════════════════ */
 
 .editais {
-  padding: 40px 16px;
+  padding: 40px 0;
 }
 
-.title {
+.editais-section-title {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: clamp(1.3rem, 2vw, 1.9rem);
@@ -69,10 +34,10 @@
   margin-bottom: 24px;
 }
 
-.results {
+.editais-empty {
   grid-column: 1 / -1;
-  font-family: "Inter", sans-serif;
-  color: #5c6b63;
+  font-family: var(--font-body);
+  color: var(--color-muted);
   text-align: center;
   padding: 32px 0;
 }
@@ -83,29 +48,33 @@
   gap: 24px;
   max-width: 100%;
   margin: 0 auto;
-  padding: 0 24px 32px;
 }
+
+/* ═══════════════════════════════════════
+   Card de Edital
+   ═══════════════════════════════════════ */
 
 .edital-card {
   display: flex;
   flex-direction: column;
   max-width: 100%;
-  background: var(--color-surface);
-  padding: 22px;
-  border-radius: 20px;
-  box-shadow: 0 4px 14px rgba(27, 42, 34, 0.06);
-  border: 1px solid #EFEEE6;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  padding: 24px;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-card-border);
   text-align: left;
   appearance: none;
   cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .edital-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(27, 42, 34, 0.12);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-primary-border);
 }
 
 .edital-card h2 {
@@ -138,7 +107,24 @@
   width: fit-content;
 }
 
-.edital-item {
-  flex: 0 0 clamp(240px, 82vw, 320px);
-  max-width: 100%;
+/* ═══════════════════════════════════════
+   Responsivo
+   ═══════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .editais-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .edital-main-title {
+    font-size: 1.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .editais-container {
+    grid-template-columns: 1fr;
+  }
 }

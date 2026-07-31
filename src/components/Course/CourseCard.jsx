@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import './CourseStyle.css';
+import { useNavigate } from "react-router-dom";
+import "./CourseStyle.css";
 
 const FALLBACK_IMAGE =
   "data:image/svg+xml;utf8," +
@@ -24,47 +24,50 @@ const FALLBACK_LOGO =
     </svg>`
   );
 
-export default function CourseCard({ institute, course }) {
+export default function CourseCard({ id, institute, course }) {
+  const navigate = useNavigate();
 
-    const navigate = useNavigate();
+  return (
+    <div className="course-card">
+      <div className="course-image-wrapper">
+        <img
+          className="course-image"
+          src={course.image || FALLBACK_IMAGE}
+          alt={course.name}
+          onError={(e) => {
+            e.currentTarget.src = FALLBACK_IMAGE;
+          }}
+        />
+        {course.turno && <span className="course-badge">{course.turno}</span>}
+      </div>
 
-    const irParaCurso = () => {
-        navigate('/curso');
-    };
-
-    return (
-        <div className="course-card">
-            <div className="course-image-wrapper">
-                <img
-                    className="course-image"
-                    src={course.image || FALLBACK_IMAGE}
-                    alt={course.name}
-                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
-                />
-                {course.turno && <span className="course-badge">{course.turno}</span>}
-            </div>
-
-            <div className="course-body">
-                <div className="institute">
-                    <img
-                        className="img-institute"
-                        src={institute.logo || FALLBACK_LOGO}
-                        alt={institute.name}
-                        onError={(e) => { e.currentTarget.src = FALLBACK_LOGO; }}
-                    />
-                    <h2 className="institute-title">{institute.name}</h2>
-                </div>
-
-                <h2 className="course-title">{course.name}</h2>
-
-                <div className="info-button">
-                    <span className="course-info">Informações públicas no site da instituição</span>
-
-                    <button className="course-button" onClick={irParaCurso}>
-                        Ver curso
-                    </button>
-                </div>
-            </div>
+      <div className="course-body">
+        <div className="institute">
+          <img
+            className="img-institute"
+            src={institute.logo || FALLBACK_LOGO}
+            alt={institute.name}
+            onError={(e) => {
+              e.currentTarget.src = FALLBACK_LOGO;
+            }}
+          />
+          <h2 className="institute-title">{institute.name}</h2>
         </div>
-    );
+
+        <h2 className="course-title">{course.name}</h2>
+
+        <div className="info-button">
+          <span className="course-info">
+            Informações públicas no site da instituição
+          </span>
+          <button
+            className="course-button"
+            onClick={() => navigate(`/curso/${id}`)}
+          >
+            Ver curso
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

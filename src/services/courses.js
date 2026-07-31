@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { apiGet } from "./api";
 
 function detectTipo(title) {
   const lower = title.toLowerCase();
@@ -8,16 +8,12 @@ function detectTipo(title) {
   return "Outro";
 }
 
-export async function fetchCourses() {
-  const response = await fetch(`${API_URL}/courses`);
-  if (!response.ok) throw new Error("Erro ao buscar cursos");
-  const data = await response.json();
-
-  return data.map((c) => ({
+function mapCourse(c) {
+  return {
     id: c.id,
     institute: {
       name: c.instituteName,
-      logo: c.instituteLogo
+      logo: c.instituteLogo,
     },
     course: {
       name: c.title,
@@ -26,15 +22,25 @@ export async function fetchCourses() {
       description: c.description,
       tipo: detectTipo(c.title),
       specs: {
-        modalidade: c.modalidade,
-        duracao: c.duracao,
-        titulo: c.titulo,
-        turno: c.turno,
-        campus: c.campus
+        modalidade: c.modality,
+        duracao: c.duration,
+        titulo: c.degree,
+        turno: c.shift,
+        campus: c.campus,
       },
-      turno: c.turno,
+      turno: c.shift,
       campus: c.campus,
-      edicts: c.edicts
-    }
-  }));
+      edicts: c.editals,
+    },
+  };
+}
+
+export async function fetchCourses() {
+  const data = await apiGet("/courses");
+  return data.map(mapCourse);
+}
+
+export async function fetchCourseById(id) {
+  const data = await apiGet(`/courses/${id}`);
+  return mapCourse(data);
 }

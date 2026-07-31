@@ -1,14 +1,21 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { apiGet } from "./api";
 
-export async function fetchEditais() {
-  const response = await fetch(`${API_URL}/editais`);
-  if (!response.ok) throw new Error("Erro ao buscar editais");
-  const data = await response.json();
-
-  return data.map((e) => ({
+function mapEdital(e) {
+  return {
     id: e.id,
     title: e.title,
-    description: e.content,
-    time: e.time
-  }));
+    description: e.description,
+    content: e.content,
+    time: e.time,
+  };
+}
+
+export async function fetchEditais() {
+  const data = await apiGet("/editals");
+  return data.map(mapEdital);
+}
+
+export async function fetchEditalById(id) {
+  const data = await apiGet(`/editals/${id}`);
+  return mapEdital(data);
 }

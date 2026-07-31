@@ -98,6 +98,7 @@ export default function CoursesList({ searchTerm = "" }) {
         {visibleCourses.map((course) => (
           <CourseCard
             key={course.id}
+            id={course.id}
             institute={course.institute}
             course={course.course}
           />

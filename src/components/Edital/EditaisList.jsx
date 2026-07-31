@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchEditais } from "../../services/edital";
-import Edital from "./EditalCard";
+import EditalCard from "./EditalCard";
 import "./EditalStyle.css";
 
 export default function EditaisList() {
@@ -17,19 +17,17 @@ export default function EditaisList() {
   return (
     <section className="editais">
       <div className="editais-header">
-        <h2 className="title">Editais Anteriores</h2>
+        <h2 className="editais-section-title">Editais Anteriores</h2>
       </div>
 
       <div className="editais-container">
-        {loading && <p className="results">Carregando editais...</p>}
+        {loading && <p className="editais-empty">Carregando editais...</p>}
         {!loading && editais.length === 0 && (
-          <p className="results">Nenhum edital foi encontrado.</p>
+          <p className="editais-empty">Nenhum edital foi encontrado.</p>
         )}
         {!loading &&
           editais.map((edital) => (
-            <div className="edital-item" key={edital.id}>
-              <Edital edital={edital} />
-            </div>
+            <EditalCard key={edital.id} edital={edital} />
           ))}
       </div>
     </section>

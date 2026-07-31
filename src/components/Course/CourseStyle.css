@@ -1,10 +1,12 @@
-@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Inter:wght@400;500;600&display=swap");
+/* ═══════════════════════════════════════
+   Header Curso (detalhe)
+   ═══════════════════════════════════════ */
 
 .details-header {
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  background-color: var(--color-surface);
+  background-color: transparent;
   width: 100%;
   padding-left: 10px;
   padding-bottom: 40px;
@@ -24,15 +26,6 @@
   gap: 24px;
 }
 
-.source-info {
-  display: block;
-  color: var(--color-muted-light);
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
 .course-main-title {
   font-family: var(--font-display);
   color: var(--color-ink);
@@ -40,17 +33,6 @@
   font-weight: 700;
   line-height: 1.25;
   margin: 0 0 20px 0;
-}
-
-.read-time-info {
-  color: var(--color-muted-light);
-  font-family: var(--font-body);
-  font-size: 13px;
-}
-
-.green-highlight {
-  color: var(--color-primary-dark);
-  font-weight: 600;
 }
 
 .header-image-content {
@@ -68,29 +50,42 @@
   box-shadow: 0 10px 24px rgba(27, 42, 34, 0.1);
 }
 
+/* ═══════════════════════════════════════
+   Filtros
+   ═══════════════════════════════════════ */
+
 .courses-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   max-width: 100%;
   margin: 0 auto 24px;
-  padding: 0 24px;
 }
 
 .courses-filters select {
   font-size: 14px;
   font-weight: 500;
-  color: #1b2a22;
-  background: #ffffff;
-  border: 2px solid #e2e8dd;
-  border-radius: 999px;
+  color: var(--color-ink);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-pill);
   padding: 10px 18px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .courses-filters select:hover {
-  border-color: #16a34a;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
 }
+
+/* ═══════════════════════════════════════
+   Grid de Cursos
+   ═══════════════════════════════════════ */
 
 .courses-container {
   display: grid;
@@ -98,33 +93,38 @@
   gap: 24px;
   max-width: 100%;
   margin: 0 auto;
-  padding: 0 24px 32px;
+  padding-bottom: 32px;
 }
 
 .no-results {
   grid-column: 1 / -1;
-  color: #5c6b63;
+  color: var(--color-muted);
   text-align: center;
   padding: 32px 0;
 }
 
+/* ═══════════════════════════════════════
+   Card de Curso
+   ═══════════════════════════════════════ */
+
 .course-card {
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-radius: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border-radius: var(--radius-card);
   overflow: hidden;
-  border: 1px solid #efeee6;
-  box-shadow: 0 4px 14px rgba(27, 42, 34, 0.06);
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 100%;
 }
 
-.course-container:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(27, 42, 34, 0.12);
+.course-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-primary-border);
 }
 
 .course-image-wrapper {
@@ -144,13 +144,12 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #ffc93c;
+  background: var(--color-yellow);
   color: #6b4e00;
-
   font-size: 12px;
   font-weight: 600;
   padding: 4px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .course-body {
@@ -177,15 +176,15 @@
 .institute-title {
   font-size: 12px;
   font-weight: 500;
-  color: #5c6b63;
+  color: var(--color-muted);
   margin: 0;
 }
 
 .course-title {
-  font-family: "Baloo 2", sans-serif;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
-  color: #1b2a22;
+  color: var(--color-ink);
   margin: 0;
   line-height: 1.25;
 }
@@ -199,42 +198,45 @@
 
 .course-info {
   font-size: 12px;
-  color: #5c6b63;
+  color: var(--color-muted);
 }
 
 .course-button {
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
-  background: #16a34a;
+  background: var(--color-primary);
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 10px 20px;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .course-button:hover {
-  background: #0f7a38;
+  background: var(--color-primary-dark);
 }
+
+/* ═══════════════════════════════════════
+   Ver Mais
+   ═══════════════════════════════════════ */
 
 .see-more-container {
   display: flex;
   justify-content: center;
-  padding: 8px 24px 48px;
+  padding: 8px 0 48px;
 }
 
 .see-more-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
-  background: #16a34a;
+  background: var(--color-primary);
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 12px 28px;
   cursor: pointer;
   transition:
@@ -249,7 +251,7 @@
 }
 
 .see-more-link:hover {
-  background: #0f7a38;
+  background: var(--color-primary-dark);
   gap: 12px;
 }
 
@@ -259,4 +261,35 @@
 
 .see-more-link:hover::after {
   transform: translateX(2px);
+}
+
+/* ═══════════════════════════════════════
+   Responsivo
+   ═══════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .courses-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .details-header {
+    flex-direction: column;
+    padding-left: 0;
+  }
+
+  .course-main-title {
+    font-size: 1.8rem;
+  }
+
+  .course-featured-image {
+    height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .courses-container {
+    grid-template-columns: 1fr;
+  }
 }

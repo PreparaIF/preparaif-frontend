@@ -1,37 +1,120 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
+/* ═══════════════════════════════════════
+   Design Tokens
+   ═══════════════════════════════════════ */
+
 :root {
-  --color-bg: #FFFDF7;
+  --color-bg: #F4F7F6;
   --color-surface: #FFFFFF;
-  --color-primary: #16A34A;
-  --color-primary-dark: #0F7A38;
-  --color-primary-light: #E6F5E9;
-  --color-primary-border: #BFE6C8;
-  --color-accent: #FF6B4A;
-  --color-accent-dark: #E14E2E;
-  --color-yellow: #FFC93C;
-  --color-ink: #1B2A22;
-  --color-muted: #5C6B63;
-  --color-muted-light: #9AA69C;
-  --color-border: #E2E8DD;
+  --color-primary: #10B981;
+  --color-primary-dark: #059669;
+  --color-primary-light: #D1FAE5;
+  --color-primary-border: #A7F3D0;
+  --color-accent: #F59E0B;
+  --color-accent-dark: #D97706;
+  --color-yellow: #FDE68A;
+  --color-ink: #1F2937;
+  --color-muted: #6B7280;
+  --color-muted-light: #9CA3AF;
+  --color-border: #E5E7EB;
+  --color-card-border: rgba(255, 255, 255, 0.4);
 
   --font-display: 'Baloo 2', sans-serif;
   --font-body: 'Inter', sans-serif;
 
-  --radius-card: 20px;
+  --radius-card: 24px;
   --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-backdrop: blur(16px);
+}
+
+/* Utils Globais */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--color-card-border);
+}
+
+/* ═══════════════════════════════════════
+   Reset & Base
+   ═══════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   font-family: var(--font-body);
   color: var(--color-ink);
   background: var(--color-bg);
+  background-image: radial-gradient(at 0% 0%, hsla(160, 100%, 76%, 0.1) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, hsla(43, 100%, 74%, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-* {
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
+/* ═══════════════════════════════════════
+   Componentes Compartilhados
+   ═══════════════════════════════════════ */
+
+/* Botão Voltar — usado em múltiplas páginas */
+.btn-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 20px;
+  margin-bottom: 40px;
+  width: fit-content;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-voltar:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  transform: translateX(-4px);
+  box-shadow: var(--shadow-card);
+}
+
+/* Informações de origem */
+.source-info {
+  display: block;
+  color: var(--color-muted-light);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Tempo de leitura */
+.read-time-info {
+  color: var(--color-muted-light);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+/* Destaque verde em textos */
+.green-highlight {
+  color: var(--color-primary-dark);
+  font-weight: 600;
 }
