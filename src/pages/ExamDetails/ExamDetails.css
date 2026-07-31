@@ -33,25 +33,7 @@
   justify-content: flex-start;
 }
 
-.btn-voltar {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-muted);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 10px 20px;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.btn-voltar:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary-dark);
-}
+/* .btn-voltar é global (index.css) */
 
 .intro-content {
   flex: 1;

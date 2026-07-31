@@ -3,19 +3,19 @@ import { Home, CourseDetails, EditalDetails, LastExams, ExamDetails } from "./pa
 import "./App.css";
 
 function App() {
-	return (
-		<div className="app-container">
-			<Router>
-				<Routes>
-					<Route path="/" element={<Home />} />
-					<Route path="/curso" element={<CourseDetails />} />
-					<Route path="/edital" element={<EditalDetails />} />
-					<Route path="/provas" element={<LastExams />} />
-					<Route path="/exame" element={<ExamDetails />} />
-				</Routes>
-			</Router>
-		</div>
-	);
+  return (
+    <div className="app-container">
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/curso/:id" element={<CourseDetails />} />
+          <Route path="/edital/:id" element={<EditalDetails />} />
+          <Route path="/provas" element={<LastExams />} />
+          <Route path="/exame/:id" element={<ExamDetails />} />
+        </Routes>
+      </Router>
+    </div>
+  );
 }
 
 export default App;

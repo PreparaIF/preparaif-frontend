@@ -1,110 +1,70 @@
-import "./LastExams.css";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchExams } from "../../services/exams";
+import { ButtonVoltar } from "../../components";
+import "./LastExams.css";
 
 function LastExams() {
-	const navigate = useNavigate();
-	const examsList = [
-		{
-			id: 1,
-			year: "2018",
-			title: "Curso Técnico Integrado ao Ensino Médio",
-			image:
-				"https://images.unsplash.com/photo-1618220179428-22790b46a0eb?q=80&w=800&auto=format&fit=crop",
-			thumb:
-				"https://images.unsplash.com/photo-1618220179428-22790b46a0eb?q=80&w=200&auto=format&fit=crop",
-			modality: "Presencial",
-			duration: "30min",
-		},
-		{
-			id: 2,
-			year: "2019",
-			title: "Curso Técnico Integrado ao Ensino Médio",
-			image:
-				"https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=800&auto=format&fit=crop",
-			thumb:
-				"https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=200&auto=format&fit=crop",
-			modality: "Presencial",
-			duration: "30min",
-		},
-		{
-			id: 3,
-			year: "2020",
-			title: "Curso Técnico Integrado ao Ensino Médio",
-			image:
-				"https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=800&auto=format&fit=crop",
-			thumb:
-				"https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=200&auto=format&fit=crop",
-			modality: "Presencial",
-			duration: "30min",
-		},
-	];
+  const navigate = useNavigate();
+  const [exams, setExams] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-	return (
-		<div className="last-exams-page">
-			<header className="last-exams-header">
-				<button className="btn-voltar" onClick={() => navigate(-1)}>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<polyline points="15 18 9 12 15 6"></polyline>
-					</svg>
-					Voltar
-				</button>
-				<h1 className="last-exams-page-title">Provas Anteriores</h1>
-			</header>
+  useEffect(() => {
+    fetchExams()
+      .then(setExams)
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
 
-			<div className="exams-carousel-container">
-				{examsList.map((exam) => (
-					<div className="last-exam-card" key={exam.id}>
-						<div className="exam-card-cover">
-							<img
-								src={exam.image}
-								alt={`Capa da prova ${exam.year}`}
-								className="cover-img"
-							/>
+  useEffect(() => {
+    document.title = "Prepara IF - Provas Anteriores";
+  }, []);
 
-							<div className="cover-text-overlay">
-								<span className="cover-subtitle">Exame Anterior</span>
-								<h3 className="cover-title">{exam.title}</h3>
-							</div>
+  return (
+    <div className="last-exams-page">
+      <header className="last-exams-header">
+        <ButtonVoltar />
+        <h1 className="last-exams-page-title">Provas Anteriores</h1>
+      </header>
 
-							<span className="exam-year-badge">{exam.year}</span>
-						</div>
+      {loading && <p>Carregando provas...</p>}
 
-						<div className="exam-card-footer">
-							<img src={exam.thumb} alt="Miniatura" className="footer-thumb" />
+      {!loading && exams.length === 0 && <p>Nenhuma prova encontrada.</p>}
 
-							<div className="footer-info-group">
-								<div className="info-block">
-									<span className="info-value">{exam.modality}</span>
-									<span className="info-label">Modalidade</span>
-								</div>
-								<div className="info-block">
-									<span className="info-value">{exam.duration}</span>
-									<span className="info-label">Duração</span>
-								</div>
-							</div>
+      {!loading && exams.length > 0 && (
+        <div className="exams-carousel-container">
+          {exams.map((exam) => (
+            <div className="last-exam-card" key={exam.id}>
+              <div className="exam-card-cover">
+                <div className="cover-text-overlay">
+                  <span className="cover-subtitle">Exame Anterior</span>
+                  <h3 className="cover-title">{exam.title}</h3>
+                </div>
+              </div>
 
-							<button
-								className="btn-fazer-prova"
-								onClick={() => navigate("/exame")}
-							>
-								Fazer a prova
-							</button>
-						</div>
-					</div>
-				))}
-			</div>
-		</div>
-	);
+              <div className="exam-card-footer">
+                <div className="footer-info-group">
+                  <div className="info-block">
+                    <span className="info-value">
+                      {exam.questions.length} questões
+                    </span>
+                    <span className="info-label">Total</span>
+                  </div>
+                </div>
+
+                <button
+                  className="btn-fazer-prova"
+                  onClick={() => navigate(`/exame/${exam.id}`)}
+                >
+                  Fazer a prova
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default LastExams;

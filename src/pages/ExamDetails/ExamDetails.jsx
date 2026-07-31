@@ -1,22 +1,24 @@
-import { useState, useEffect } from 'react';
-import { fetchExam } from '../../services/examData';
-import './ExamDetails.css';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { fetchExamById } from "../../services/exams";
+import { ButtonVoltar } from "../../components";
+import "./ExamDetails.css";
 
-function Exam() {
+function ExamDetails() {
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [examData, setExamData] = useState(null);
   const [loadingExam, setLoadingExam] = useState(true);
 
-  const [screenState, setScreenState] = useState('intro');
+  const [screenState, setScreenState] = useState("intro");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userAnswers, setUserAnswers] = useState([]);
 
   useEffect(() => {
-    fetchExam()
+    fetchExamById(id)
       .then((data) => {
         setExamData(data);
         if (data) {
@@ -25,7 +27,13 @@ function Exam() {
       })
       .catch((err) => console.error(err))
       .finally(() => setLoadingExam(false));
-  }, []);
+  }, [id]);
+
+  useEffect(() => {
+    if (examData) {
+      document.title = `Prepara IF - ${examData.title}`;
+    }
+  }, [examData]);
 
   if (loadingExam) {
     return (
@@ -38,6 +46,9 @@ function Exam() {
   if (!examData) {
     return (
       <div className="exam-page-container">
+        <div className="exam-header">
+          <ButtonVoltar />
+        </div>
         <p>Não foi possível carregar a prova.</p>
       </div>
     );
@@ -45,7 +56,7 @@ function Exam() {
 
   const currentQuestion = examData.questions[currentQuestionIndex];
 
-  const startExam = () => setScreenState('playing');
+  const startExam = () => setScreenState("playing");
 
   const handleOptionSelect = (index) => {
     setSelectedOption(index);
@@ -74,44 +85,55 @@ function Exam() {
 
   const confirmFinish = () => {
     setIsModalOpen(false);
-    setScreenState('finished');
+    setScreenState("finished");
   };
 
   const restartExam = () => {
-    setScreenState('intro');
+    setScreenState("intro");
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setUserAnswers(Array(examData.questions.length).fill(null));
   };
 
-  if (screenState === 'intro') {
+  // ─── Tela: Introdução ───
+  if (screenState === "intro") {
     return (
       <div className="exam-page-container">
         <div className="exam-header">
-          <button className="btn-voltar">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Voltar
-          </button>
+          <ButtonVoltar />
         </div>
         <div className="intro-content">
-          <h1 className="intro-title">Você fará a prova para ingresso no curso<br />{examData.title}</h1>
-          <button className="btn-green-large" onClick={startExam}>Começar</button>
+          <h1 className="intro-title">
+            Você fará a prova para ingresso no curso
+            <br />
+            {examData.title}
+          </h1>
+          <button className="btn-green-large" onClick={startExam}>
+            Começar
+          </button>
         </div>
       </div>
     );
   }
 
-  if (screenState === 'playing') {
+  // ─── Tela: Prova ───
+  if (screenState === "playing") {
     return (
       <div className="exam-page-container">
-
         {isModalOpen && (
           <div className="modal-overlay">
             <div className="modal-box">
               <h2>Tem certeza que deseja finalizar?</h2>
               <div className="modal-buttons">
-                <button className="btn-gray-large" onClick={() => setIsModalOpen(false)}>Voltar</button>
-                <button className="btn-green-large" onClick={confirmFinish}>Finalizar</button>
+                <button
+                  className="btn-gray-large"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Voltar
+                </button>
+                <button className="btn-green-large" onClick={confirmFinish}>
+                  Finalizar
+                </button>
               </div>
             </div>
           </div>
@@ -121,16 +143,13 @@ function Exam() {
           {examData.questions.map((_, index) => (
             <div
               key={index}
-              className={`progress-step ${index <= currentQuestionIndex ? 'active' : ''}`}
+              className={`progress-step ${index <= currentQuestionIndex ? "active" : ""}`}
             ></div>
           ))}
         </div>
 
         <div className="exam-header">
-          <button className="btn-voltar" onClick={() => setScreenState('intro')}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Voltar
-          </button>
+          <ButtonVoltar onClick={() => setScreenState("intro")} />
         </div>
 
         <div className="question-content">
@@ -138,7 +157,10 @@ function Exam() {
 
           <div className="options-list">
             {currentQuestion.options.map((option, index) => (
-              <label key={index} className={`option-item ${selectedOption === index ? 'selected' : ''}`}>
+              <label
+                key={index}
+                className={`option-item ${selectedOption === index ? "selected" : ""}`}
+              >
                 <input
                   type="radio"
                   name="exam-option"
@@ -153,35 +175,45 @@ function Exam() {
 
         <div className="exam-footer">
           {currentQuestionIndex > 0 && (
-            <button className="btn-gray-large" onClick={prevQuestion}>Anterior</button>
+            <button className="btn-gray-large" onClick={prevQuestion}>
+              Anterior
+            </button>
           )}
-          <button className="btn-green-large" onClick={nextQuestion} disabled={selectedOption === null}>
-            {currentQuestionIndex === examData.questions.length - 1 ? 'Finalizar' : 'Próxima'}
+          <button
+            className="btn-green-large"
+            onClick={nextQuestion}
+            disabled={selectedOption === null}
+          >
+            {currentQuestionIndex === examData.questions.length - 1
+              ? "Finalizar"
+              : "Próxima"}
           </button>
         </div>
       </div>
     );
   }
 
-  if (screenState === 'finished') {
+  // ─── Tela: Resultado ───
+  if (screenState === "finished") {
     const totalQuestions = examData.questions.length;
-    const correctCount = userAnswers.filter((answer, i) => answer === examData.questions[i].correctAnswerIndex).length;
+    const correctCount = userAnswers.filter(
+      (answer, i) => answer === examData.questions[i].correctAnswerIndex
+    ).length;
     const wrongCount = totalQuestions - correctCount;
     const percentage = Math.round((correctCount / totalQuestions) * 100);
 
     return (
       <div className="exam-page-container">
         <div className="exam-header">
-          <button className="btn-voltar" onClick={restartExam}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Voltar
-          </button>
+          <ButtonVoltar onClick={restartExam} />
         </div>
 
         <div className="intro-content">
           <div
             className="progress-wrapper"
-            style={{ background: `conic-gradient(#3b9159 ${percentage}%, #9ec7a9 0)` }}
+            style={{
+              background: `conic-gradient(#3b9159 ${percentage}%, #9ec7a9 0)`,
+            }}
           >
             <div className="progress-inner">
               <span className="percentage-text">{percentage}%</span>
@@ -199,14 +231,22 @@ function Exam() {
           </div>
 
           <div className="action-buttons-vertical">
-            <button className="btn-green-large w-100" onClick={() => navigate(-1)}>Continuar</button>
-            <button className="btn-outline-large w-100" onClick={restartExam}>Refazer</button>
+            <button
+              className="btn-green-large w-100"
+              onClick={() => navigate(-1)}
+            >
+              Continuar
+            </button>
+            <button className="btn-outline-large w-100" onClick={restartExam}>
+              Refazer
+            </button>
           </div>
-
         </div>
       </div>
     );
   }
+
+  return null;
 }
 
-export default Exam;
+export default ExamDetails;
