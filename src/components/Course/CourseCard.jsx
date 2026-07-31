@@ -27,34 +27,37 @@ const FALLBACK_LOGO =
 export default function CourseCard({ id, institute, course }) {
   const navigate = useNavigate();
 
+  const instData = institute || {};
+  const courseData = course || {};
+
   return (
     <div className="course-card">
       <div className="course-image-wrapper">
         <img
           className="course-image"
-          src={course.image || FALLBACK_IMAGE}
-          alt={course.name}
+          src={courseData.image || FALLBACK_IMAGE}
+          alt={courseData.name || "Curso"}
           onError={(e) => {
             e.currentTarget.src = FALLBACK_IMAGE;
           }}
         />
-        {course.turno && <span className="course-badge">{course.turno}</span>}
+        {courseData.turno && <span className="course-badge">{courseData.turno}</span>}
       </div>
 
       <div className="course-body">
         <div className="institute">
           <img
             className="img-institute"
-            src={institute.logo || FALLBACK_LOGO}
-            alt={institute.name}
+            src={instData.logo || FALLBACK_LOGO}
+            alt={instData.name || "Instituto"}
             onError={(e) => {
               e.currentTarget.src = FALLBACK_LOGO;
             }}
           />
-          <h2 className="institute-title">{institute.name}</h2>
+          <h2 className="institute-title">{instData.name || "Instituto Federal"}</h2>
         </div>
 
-        <h2 className="course-title">{course.name}</h2>
+        <h2 className="course-title">{courseData.name || "Curso Técnico"}</h2>
 
         <div className="info-button">
           <span className="course-info">
