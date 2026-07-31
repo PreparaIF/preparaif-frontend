@@ -1,7 +1,3 @@
-/* ═══════════════════════════════════════
-   Header Edital (detalhe)
-   ═══════════════════════════════════════ */
-
 .header-edital {
   display: flex;
   flex-direction: column;
@@ -17,10 +13,6 @@
   line-height: 1.25;
   margin: 0 0 20px 0;
 }
-
-/* ═══════════════════════════════════════
-   Seção Editais (lista na Home)
-   ═══════════════════════════════════════ */
 
 .editais {
   padding: 40px 0;
@@ -49,10 +41,6 @@
   max-width: 100%;
   margin: 0 auto;
 }
-
-/* ═══════════════════════════════════════
-   Card de Edital
-   ═══════════════════════════════════════ */
 
 .edital-card {
   display: flex;
@@ -106,10 +94,6 @@
   border-radius: var(--radius-pill);
   width: fit-content;
 }
-
-/* ═══════════════════════════════════════
-   Responsivo
-   ═══════════════════════════════════════ */
 
 @media (max-width: 1024px) {
   .editais-container {
