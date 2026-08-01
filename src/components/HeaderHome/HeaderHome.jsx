@@ -1,8 +1,33 @@
+import { useNavigate } from "react-router-dom";
 import "./HeaderHome.css";
 
 export default function HeaderHome({ searchTerm, onSearchChange }) {
+  const navigate = useNavigate();
+
   return (
     <div className="header-container">
+      <div className="header-top-bar">
+        <button
+          className="admin-nav-button"
+          onClick={() => navigate("/admin")}
+          title="Acessar Painel do Administrador"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span>Painel Admin</span>
+        </button>
+      </div>
+
       <div className="hero-banner">
         <p className="hero-subtitle">
           A NOSSA FERRAMENTA NÃO TEM FINS LUCRATIVOS
