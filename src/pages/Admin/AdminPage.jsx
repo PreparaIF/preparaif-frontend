@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { uploadDocumento } from '../../services/upload';
 import { fetchCourses } from '../../services/courses';
 import { fetchEditais } from '../../services/edital';
@@ -13,6 +14,9 @@ const TABS = [
 ];
 
 export default function AdminPage() {
+  const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
   const [activeTab, setActiveTab] = useState('prova');
   const [inputMode, setInputMode] = useState('pdf');
   const [loading, setLoading] = useState(false);
@@ -46,6 +50,14 @@ export default function AdminPage() {
   });
   const [file, setFile] = useState(null);
   const [fileGabarito, setFileGabarito] = useState(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -340,6 +352,51 @@ export default function AdminPage() {
     desc: 'Consulte e edite dados cadastrados no banco'
   };
 
+  if (isMobile) {
+    return (
+      <div className="admin-page mobile-restricted-page">
+        <div className="admin-top-bar">
+          <ButtonVoltar />
+        </div>
+
+        <div className="admin-mobile-restricted">
+          <div className="restricted-card">
+            <div className="restricted-badge">
+              <span className="badge-dot" />
+              Telas Maiores Requeridas
+            </div>
+
+            <div className="restricted-icon-wrapper">
+              <span className="restricted-icon">💻</span>
+            </div>
+
+            <h2>Painel Indisponível em Celulares</h2>
+            <p>
+              O sistema de extração de PDFs e gerenciamento de banco do <strong>PreparaIF</strong> foi projetado exclusivamente para uso em computadores.
+            </p>
+
+            <div className="restricted-features">
+              <div className="feature-chip">
+                <span>📄 Extração Avançada de PDFs & Textos</span>
+              </div>
+              <div className="feature-chip">
+                <span>✏️ Edição de Provas, Cursos e Editais</span>
+              </div>
+            </div>
+
+            <p className="restricted-sub">
+              Por favor, acesse através de um computador para utilizar o painel administrativo.
+            </p>
+
+            <button className="btn-back-home" onClick={() => navigate('/')}>
+              <span>🏠 Voltar para a Página Inicial</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-top-bar">
@@ -407,7 +464,6 @@ export default function AdminPage() {
               </div>
 
               <div className="manage-categories-grid">
-                {/* Seção 1: Provas */}
                 <div className="manage-category-card">
                   <button
                     type="button"
@@ -448,7 +504,6 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                {/* Seção 2: Editais */}
                 <div className="manage-category-card">
                   <button
                     type="button"
@@ -489,7 +544,6 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                {/* Seção 3: Cursos */}
                 <div className="manage-category-card">
                   <button
                     type="button"
@@ -545,7 +599,6 @@ export default function AdminPage() {
                         : activeTabInfo.desc}
                     </span>
                   </div>
-
                   {isEditingExisting ? (
                     <button
                       type="button"
@@ -587,10 +640,8 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* SE NÃO ESTIVER EDITANDO: MOSTRA SWITCH E UPLOAD DE ARQUIVOS */}
               {!isEditingExisting && (
                 <>
-                  {/* Switch Moderno (Segmented Control Centralizado) */}
                   <div className="input-mode-switch-container">
                     <div className="input-mode-switch">
                       <button
@@ -620,7 +671,6 @@ export default function AdminPage() {
                 </>
               )}
 
-              {/* CAMPOS DE METADADOS (ANO, EXAME, TÍTULO, INSTITUIÇÃO) */}
               {activeTab === 'prova' && (
                 <div className="form-row">
                   <div className="form-group">
@@ -672,12 +722,10 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* SE NÃO ESTIVER EDITANDO: MOSTRA ZONA DE UPLOAD DE ARQUIVOS E BOTÃO DE EXTRAÇÃO */}
               {!isEditingExisting && (
                 <>
                   {inputMode === 'pdf' ? (
                     activeTab === 'prova' ? (
-                      /* Lado a Lado para Prova + Gabarito */
                       <div className="form-row">
                         <div className="form-group">
                           <label>Arquivo PDF da Prova *</label>
@@ -756,7 +804,6 @@ export default function AdminPage() {
                         </div>
                       </div>
                     ) : (
-                      /* PDF único para Edital ou Curso */
                       <div className="form-group">
                         <label>Arquivo PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} *</label>
                         <div
@@ -825,7 +872,6 @@ export default function AdminPage() {
             </form>
           )}
 
-          {/* Resultado Editável / Visualização */}
           {result && activeTab !== 'editar' && (
             <div className="result-card">
               <div className="result-header">
@@ -847,7 +893,6 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              {/* SE FOR PROVA (QUESTÕES EDITÁVEIS) */}
               {result.questoes && (
                 <div className="questions-list">
                   {result.questoes.map((q, idx) => (
@@ -911,7 +956,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* SE FOR EDITAL EDITÁVEL */}
               {result.edital && (
                 <div className="extracted-edital edit-mode-edital">
                   <div className="edit-q-block">
@@ -944,7 +988,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* SE FOR CURSO EDITÁVEL */}
               {result.course && (
                 <div className="extracted-course edit-mode-course">
                   <div className="edit-q-block">
