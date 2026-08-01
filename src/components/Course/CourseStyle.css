@@ -19,7 +19,10 @@
 }
 
 .header-text-content-inner {
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
 }
 
 .course-main-title {
