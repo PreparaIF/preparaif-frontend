@@ -1,5 +1,7 @@
 import { apiGet } from "./api";
 
+let coursesCache = null;
+
 function detectTipo(title) {
   const lower = title.toLowerCase();
   if (lower.includes("bacharelado")) return "Bacharelado";
@@ -35,12 +37,24 @@ function mapCourse(c) {
   };
 }
 
-export async function fetchCourses() {
+export async function fetchCourses(forceRefresh = false) {
+  if (coursesCache && !forceRefresh) {
+    return coursesCache;
+  }
   const data = await apiGet("/courses");
-  return data.map(mapCourse);
+  coursesCache = data.map(mapCourse);
+  return coursesCache;
 }
 
 export async function fetchCourseById(id) {
+  if (coursesCache) {
+    const found = coursesCache.find((c) => String(c.id) === String(id));
+    if (found) return found;
+  }
   const data = await apiGet(`/courses/${id}`);
   return mapCourse(data);
+}
+
+export function clearCoursesCache() {
+  coursesCache = null;
 }

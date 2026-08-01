@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchEditais } from "../../services/edital";
 import EditalCard from "./EditalCard";
+import LoadingSpinner from "../Utils/LoadingSpinner";
 import "./EditalStyle.css";
 
 export default function EditaisList() {
@@ -21,7 +22,7 @@ export default function EditaisList() {
       </div>
 
       <div className="editais-container">
-        {loading && <p className="editais-empty">Carregando editais...</p>}
+        {loading && <LoadingSpinner text="Carregando editais..." />}
         {!loading && editais.length === 0 && (
           <p className="editais-empty">Nenhum edital foi encontrado.</p>
         )}

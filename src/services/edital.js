@@ -1,5 +1,7 @@
 import { apiGet } from "./api";
 
+let editaisCache = null;
+
 function mapEdital(e) {
   return {
     id: e.id,
@@ -10,12 +12,24 @@ function mapEdital(e) {
   };
 }
 
-export async function fetchEditais() {
+export async function fetchEditais(forceRefresh = false) {
+  if (editaisCache && !forceRefresh) {
+    return editaisCache;
+  }
   const data = await apiGet("/editals");
-  return data.map(mapEdital);
+  editaisCache = data.map(mapEdital);
+  return editaisCache;
 }
 
 export async function fetchEditalById(id) {
+  if (editaisCache) {
+    const found = editaisCache.find((e) => String(e.id) === String(id));
+    if (found) return found;
+  }
   const data = await apiGet(`/editals/${id}`);
   return mapEdital(data);
+}
+
+export function clearEditaisCache() {
+  editaisCache = null;
 }

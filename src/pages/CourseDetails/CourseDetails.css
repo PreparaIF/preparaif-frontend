@@ -1,5 +1,4 @@
 .details-body {
-  background-color: var(--color-bg);
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 40px;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExams } from "../../services/exams";
-import { ButtonVoltar } from "../../components";
+import { ButtonVoltar, LoadingSpinner } from "../../components";
 import "./LastExams.css";
 
 function LastExams() {
@@ -27,7 +27,7 @@ function LastExams() {
         <h1 className="last-exams-page-title">Provas Anteriores</h1>
       </header>
 
-      {loading && <p>Carregando provas...</p>}
+      {loading && <LoadingSpinner text="Carregando provas anteriores..." />}
 
       {!loading && exams.length === 0 && <p>Nenhuma prova encontrada.</p>}
 

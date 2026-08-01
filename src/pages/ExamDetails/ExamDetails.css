@@ -21,6 +21,9 @@
 
 .exam-page-container {
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -31,6 +34,7 @@
   width: 100%;
   display: flex;
   justify-content: flex-start;
+  margin-bottom: 24px;
 }
 
 .intro-content {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { fetchCourses } from "../../services/courses";
 import CourseCard from "./CourseCard";
+import LoadingSpinner from "../Utils/LoadingSpinner";
 import "./CourseStyle.css";
 
 const PAGE_SIZE = 6;
@@ -56,7 +57,7 @@ export default function CoursesList({ searchTerm = "" }) {
     setVisibleCount(PAGE_SIZE);
   };
 
-  if (loading) return <p>Carregando cursos...</p>;
+  if (loading) return <LoadingSpinner text="Carregando cursos..." />;
 
   return (
     <>

@@ -3,11 +3,14 @@
   border-radius: var(--radius-card);
   margin: 0 auto;
   padding: 60px 40px;
-  background-color: var(--color-bg);
 }
 
-.edict-back {
-  margin-bottom: 50px;
+.edict-top-nav {
+  margin-bottom: 24px;
+}
+
+.edict-top-nav .btn-voltar {
+  margin-bottom: 0;
 }
 
 .edict-content-split {
@@ -45,6 +48,7 @@
   color: var(--color-muted);
   line-height: 1.7;
   font-size: 0.95rem;
+  margin-top: 0;
   margin-bottom: 16px;
 }
 

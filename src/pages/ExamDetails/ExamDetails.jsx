@@ -95,7 +95,6 @@ function ExamDetails() {
     setUserAnswers(Array(examData.questions.length).fill(null));
   };
 
-  // ─── Tela: Introdução ───
   if (screenState === "intro") {
     return (
       <div className="exam-page-container">
@@ -116,7 +115,6 @@ function ExamDetails() {
     );
   }
 
-  // ─── Tela: Prova ───
   if (screenState === "playing") {
     return (
       <div className="exam-page-container">
@@ -193,7 +191,6 @@ function ExamDetails() {
     );
   }
 
-  // ─── Tela: Resultado ───
   if (screenState === "finished") {
     const totalQuestions = examData.questions.length;
     const correctCount = userAnswers.filter(
