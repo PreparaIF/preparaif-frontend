@@ -33,7 +33,9 @@ export async function apiUpload(path, formData) {
 
   if (!response.ok) {
     let err = {};
-    try { err = await response.json(); } catch (_e) { /* resposta sem corpo JSON */ } // eslint-disable-line no-unused-vars
+    try { err = await response.json(); } catch {
+      // resposta sem corpo JSON
+    }
     throw new Error(err.error || err.detail || `Erro ${response.status}`);
   }
 

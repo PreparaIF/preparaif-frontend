@@ -1,21 +1,38 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { uploadDocumento } from '../../services/upload';
+import { fetchCourses } from '../../services/courses';
+import { fetchEditais } from '../../services/edital';
+import { fetchExams } from '../../services/exams';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './AdminPage.css';
 
 const TABS = [
-  { id: 'prova', label: '📄 Prova (PDF)', desc: 'Extrai questões, alternativas e imagens' },
-  { id: 'edital', label: '📜 Edital (PDF)', desc: 'Extrai título, descrição e conteúdo' },
-  { id: 'curso', label: '🎓 Curso (PDF)', desc: 'Extrai nome, campus, turno e modalidade' },
-  { id: 'texto', label: '✍️ Texto Livre', desc: 'Limpa e estrutura qualquer texto' },
+  { id: 'prova', label: '📄 Prova', desc: 'Extrai questões, alternativas e imagens' },
+  { id: 'edital', label: '📜 Edital', desc: 'Extrai título, descrição e conteúdo' },
+  { id: 'curso', label: '🎓 Curso', desc: 'Extrai nome, campus, turno e modalidade' },
 ];
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('prova');
+  const [inputMode, setInputMode] = useState('pdf'); // 'pdf' | 'text'
   const [loading, setLoading] = useState(false);
+  const [savingDb, setSavingDb] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [result, setResult] = useState(null);
-  const [salvarBanco, setSalvarBanco] = useState(false);
+
+  // Manage DB Records state
+  const [dbSearchTerm, setDbSearchTerm] = useState('');
+  const [dbExams, setDbExams] = useState([]);
+  const [dbEditais, setDbEditais] = useState([]);
+  const [dbCourses, setDbCourses] = useState([]);
+
+  // Accordion state for categories (starts with ALL closed by default)
+  const [openCategories, setOpenCategories] = useState({
+    prova: false,
+    edital: false,
+    curso: false,
+  });
+
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingGab, setIsDraggingGab] = useState(false);
   const fileInputRef = useRef(null);
@@ -30,6 +47,56 @@ export default function AdminPage() {
   });
   const [file, setFile] = useState(null);
   const [fileGabarito, setFileGabarito] = useState(null);
+
+  useEffect(() => {
+    let isSubscribed = true;
+    const loadAll = async () => {
+      try {
+        const [courses, editais, exams] = await Promise.all([
+          fetchCourses(true),
+          fetchEditais(true),
+          fetchExams(true),
+        ]);
+        if (isSubscribed) {
+          setDbCourses(courses || []);
+          setDbEditais(editais || []);
+          setDbExams(exams || []);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados do banco:", err);
+      }
+    };
+    loadAll();
+    return () => { isSubscribed = false; };
+  }, []);
+
+  const normSearch = dbSearchTerm.toLowerCase().trim();
+  const filteredExams = dbExams.filter(e => e.title.toLowerCase().includes(normSearch));
+  const filteredEditais = dbEditais.filter(e => e.title.toLowerCase().includes(normSearch));
+  const filteredCourses = dbCourses.filter(c => c.course.name.toLowerCase().includes(normSearch));
+
+  const handleSearchChange = (e) => {
+    const term = e.target.value;
+    setDbSearchTerm(term);
+    if (term.trim() !== '') {
+      const norm = term.toLowerCase().trim();
+      setOpenCategories({
+        prova: dbExams.some(ex => ex.title.toLowerCase().includes(norm)),
+        edital: dbEditais.some(ed => ed.title.toLowerCase().includes(norm)),
+        curso: dbCourses.some(c => c.course.name.toLowerCase().includes(norm)),
+      });
+    } else {
+      setOpenCategories({
+        prova: false,
+        edital: false,
+        curso: false,
+      });
+    }
+  };
+
+  const toggleCategory = (cat) => {
+    setOpenCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,16 +117,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    handleFileSelect(dropped);
-  };
-
   const handleGabaritoSelect = (selectedFile) => {
     if (selectedFile && selectedFile.type === 'application/pdf') {
       setFileGabarito(selectedFile);
+      setMessage({ type: '', text: '' });
     } else if (selectedFile) {
       setMessage({ type: 'error', text: 'Apenas arquivos PDF são aceitos para o gabarito.' });
     }
@@ -71,11 +132,20 @@ export default function AdminPage() {
     }
   };
 
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
   const handleDropGabarito = (e) => {
     e.preventDefault();
     setIsDraggingGab(false);
-    const dropped = e.dataTransfer.files[0];
-    handleGabaritoSelect(dropped);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleGabaritoSelect(e.dataTransfer.files[0]);
+    }
   };
 
   const handleTabChange = (tab) => {
@@ -97,31 +167,29 @@ export default function AdminPage() {
       if (activeTab === 'prova' && (!formData.ano || !formData.exame_num)) {
         throw new Error('Ano e número do exame são obrigatórios para provas.');
       }
-      if ((activeTab === 'prova' || activeTab === 'edital' || activeTab === 'curso') && !file) {
+
+      if (inputMode === 'pdf' && !file) {
         throw new Error('Por favor, selecione um arquivo PDF.');
       }
-      if (activeTab === 'texto' && !formData.texto.trim()) {
-        throw new Error('Por favor, insira o texto.');
+
+      if (inputMode === 'text' && !formData.texto.trim()) {
+        throw new Error('Por favor, insira o texto para extração.');
       }
 
       const metadata = {
         ano: formData.ano,
         exame_num: formData.exame_num,
-        texto: formData.texto,
+        texto: inputMode === 'text' ? formData.texto : '',
         titulo_personalizado: formData.titulo_personalizado,
         instituteName: formData.instituteName,
-        salvar_banco: salvarBanco,
-        file_gabarito: fileGabarito,
+        salvar_banco: false,
+        file_gabarito: inputMode === 'pdf' ? fileGabarito : null,
       };
 
-      const res = await uploadDocumento(activeTab, file, metadata);
+      const res = await uploadDocumento(activeTab, inputMode === 'pdf' ? file : null, metadata);
 
-      const msgTexto = res.mensagem || 'Processamento concluído!';
-      const salvoExtra = res.salvo && res.registro_criado
-        ? ` Salvo no banco com ID ${res.registro_criado.id}.`
-        : '';
-
-      setMessage({ type: 'success', text: msgTexto + salvoExtra });
+      const msgTexto = res.mensagem || 'Extração concluída com sucesso! Clique em "Enviar ao Banco" no canto superior direito para salvar.';
+      setMessage({ type: 'success', text: msgTexto });
       setResult(res.dados);
 
     } catch (error) {
@@ -135,7 +203,95 @@ export default function AdminPage() {
     }
   };
 
-  const activeTabInfo = TABS.find(t => t.id === activeTab);
+  const handleSaveToDb = async () => {
+    if (!result) return;
+    setSavingDb(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const metadata = {
+        ano: formData.ano,
+        exame_num: formData.exame_num,
+        texto: inputMode === 'text' ? formData.texto : '',
+        titulo_personalizado: formData.titulo_personalizado,
+        instituteName: formData.instituteName,
+        salvar_banco: true,
+        file_gabarito: inputMode === 'pdf' ? fileGabarito : null,
+      };
+
+      const res = await uploadDocumento(activeTab, inputMode === 'pdf' ? file : null, metadata);
+      const [courses, editais, exams] = await Promise.all([
+        fetchCourses(true),
+        fetchEditais(true),
+        fetchExams(true),
+      ]);
+      setDbCourses(courses || []);
+      setDbEditais(editais || []);
+      setDbExams(exams || []);
+      setMessage({
+        type: 'success',
+        text: `✅ Dados salvos com sucesso no Banco de Dados! ${res.registro_criado ? `(ID: ${res.registro_criado.id})` : ''}`,
+      });
+    } catch (err) {
+      console.error("Erro ao salvar no banco:", err);
+      setMessage({ type: 'error', text: err.message || "Erro ao salvar no banco de dados." });
+    } finally {
+      setSavingDb(false);
+    }
+  };
+
+  const handleEditExam = (item) => {
+    setActiveTab('prova');
+    setFormData({
+      ano: item.title.match(/\d{4}/)?.[0] || '',
+      exame_num: item.title.match(/exame\s*(\d+)/i)?.[1] || '',
+      texto: '',
+      titulo_personalizado: item.title,
+      instituteName: 'IFAL',
+    });
+    setResult({ questoes: item.questions || [] });
+    setMessage({ type: 'success', text: `Prova "${item.title}" carregada para edição.` });
+  };
+
+  const handleEditEdital = (item) => {
+    setActiveTab('edital');
+    setFormData({
+      ano: '',
+      exame_num: '',
+      texto: '',
+      titulo_personalizado: item.title,
+      instituteName: 'IFAL',
+    });
+    setResult({ edital: item });
+    setMessage({ type: 'success', text: `Edital "${item.title}" carregado para edição.` });
+  };
+
+  const handleEditCourse = (item) => {
+    setActiveTab('curso');
+    setFormData({
+      ano: '',
+      exame_num: '',
+      texto: '',
+      titulo_personalizado: item.course.name,
+      instituteName: item.institute?.name || 'IFAL',
+    });
+    setResult({
+      course: {
+        title: item.course.name,
+        description: item.course.description,
+        campus: item.course.campus,
+        shift: item.course.turno,
+        modality: item.course.specs?.modalidade || 'Presencial',
+        duration: item.course.specs?.duracao || '4 anos',
+      }
+    });
+    setMessage({ type: 'success', text: `Curso "${item.course.name}" carregado para edição.` });
+  };
+
+  const activeTabInfo = TABS.find(t => t.id === activeTab) || {
+    id: 'editar',
+    label: '✏️ Editar Registros',
+    desc: 'Consulte e edite dados cadastrados no banco'
+  };
 
   return (
     <div className="admin-page">
@@ -143,16 +299,16 @@ export default function AdminPage() {
         <ButtonVoltar />
       </div>
       <div className="admin-hero">
-        <span className="admin-badge">Extração de PDFs</span>
+        <span className="admin-badge">Painel Administrativo</span>
         <h1 className="admin-title">Processamento de Documentos</h1>
         <p className="admin-subtitle">
-          Envie PDFs de Provas, Editais ou Cursos para extração automática e inteligente de dados.
+          Envie PDFs ou textos para extração com IA, ou gerencie registros existentes do banco de dados.
         </p>
       </div>
 
       <div className="admin-layout">
         <aside className="admin-sidebar">
-          <p className="sidebar-label">Tipo de documento</p>
+          <p className="sidebar-label">Extração de Arquivos</p>
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -166,22 +322,14 @@ export default function AdminPage() {
 
           <div className="sidebar-divider" />
 
-          <label className="save-toggle">
-            <input
-              type="checkbox"
-              checked={salvarBanco}
-              onChange={e => setSalvarBanco(e.target.checked)}
-            />
-            <span className="save-toggle-slider" />
-            <span className="save-toggle-label">
-              Salvar no banco após extração
-            </span>
-          </label>
-          <p className="save-hint">
-            {salvarBanco
-              ? '✅ Os dados extraídos serão persistidos automaticamente.'
-              : '⚠️ Apenas visualização. Nada será salvo.'}
-          </p>
+          <p className="sidebar-label">Gerenciamento</p>
+          <button
+            className={`sidebar-tab ${activeTab === 'editar' ? 'active' : ''}`}
+            onClick={() => handleTabChange('editar')}
+          >
+            <span className="sidebar-tab-label">✏️ Editar Registros</span>
+            <span className="sidebar-tab-desc">Consulte e edite dados do banco</span>
+          </button>
         </aside>
 
         <main className="admin-main">
@@ -191,40 +339,235 @@ export default function AdminPage() {
             </div>
           )}
 
-          <form className="admin-form-card" onSubmit={handleSubmit}>
-            <div className="form-card-header">
-              <h2>{activeTabInfo.label}</h2>
-              <span className="form-card-hint">{activeTabInfo.desc}</span>
-            </div>
+          {activeTab === 'editar' ? (
+            <div className="admin-form-card">
+              <div className="form-card-header">
+                <h2>✏️ Registros do Banco de Dados</h2>
+                <span className="form-card-hint">
+                  Clique na categoria para expandir ou digite na pesquisa para filtrar automaticamente.
+                </span>
+              </div>
 
-            {activeTab === 'prova' && (
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Ano da Prova *</label>
-                  <input
-                    type="text"
-                    name="ano"
-                    placeholder="Ex: 2025"
-                    value={formData.ano}
-                    onChange={handleInputChange}
-                    required
-                  />
+              <div className="manage-search-container">
+                <input
+                  type="text"
+                  className="manage-search-input"
+                  placeholder="🔍 Digite para pesquisar por título, ano ou instituição..."
+                  value={dbSearchTerm}
+                  onChange={handleSearchChange}
+                />
+              </div>
+
+              <div className="manage-categories-grid">
+                <div className="manage-category-card">
+                  <button
+                    type="button"
+                    className={`category-header-btn ${openCategories.prova ? 'open' : ''}`}
+                    onClick={() => toggleCategory('prova')}
+                  >
+                    <h3>📄 Provas Cadastradas <span className="category-count">({filteredExams.length})</span></h3>
+                    <span className="category-arrow">{openCategories.prova ? '▲' : '▼'}</span>
+                  </button>
+
+                  {openCategories.prova && (
+                    <div className="category-items-list">
+                      {filteredExams.length === 0 ? (
+                        <p className="empty-category-text">Nenhuma prova encontrada.</p>
+                      ) : (
+                        filteredExams.map(ex => (
+                          <div key={ex.id} className="manage-item-row">
+                            <div className="item-main-info">
+                              <span className="item-title">{ex.title}</span>
+                              <span className="item-meta">{ex.questions?.length || 0} questões cadastradas</span>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-edit-item"
+                              onClick={() => handleEditExam(ex)}
+                              title="Editar esta prova"
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                              <span>Editar</span>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="form-group">
-                  <label>Número do Exame *</label>
-                  <input
-                    type="text"
-                    name="exame_num"
-                    placeholder="Ex: 01"
-                    value={formData.exame_num}
-                    onChange={handleInputChange}
-                    required
-                  />
+
+                <div className="manage-category-card">
+                  <button
+                    type="button"
+                    className={`category-header-btn ${openCategories.edital ? 'open' : ''}`}
+                    onClick={() => toggleCategory('edital')}
+                  >
+                    <h3>📜 Editais Cadastrados <span className="category-count">({filteredEditais.length})</span></h3>
+                    <span className="category-arrow">{openCategories.edital ? '▲' : '▼'}</span>
+                  </button>
+
+                  {openCategories.edital && (
+                    <div className="category-items-list">
+                      {filteredEditais.length === 0 ? (
+                        <p className="empty-category-text">Nenhum edital encontrado.</p>
+                      ) : (
+                        filteredEditais.map(ed => (
+                          <div key={ed.id} className="manage-item-row">
+                            <div className="item-main-info">
+                              <span className="item-title">{ed.title}</span>
+                              {ed.description && <span className="item-meta">{ed.description.slice(0, 70)}...</span>}
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-edit-item"
+                              onClick={() => handleEditEdital(ed)}
+                              title="Editar este edital"
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                              <span>Editar</span>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="manage-category-card">
+                  <button
+                    type="button"
+                    className={`category-header-btn ${openCategories.curso ? 'open' : ''}`}
+                    onClick={() => toggleCategory('curso')}
+                  >
+                    <h3>🎓 Cursos Cadastrados <span className="category-count">({filteredCourses.length})</span></h3>
+                    <span className="category-arrow">{openCategories.curso ? '▲' : '▼'}</span>
+                  </button>
+
+                  {openCategories.curso && (
+                    <div className="category-items-list">
+                      {filteredCourses.length === 0 ? (
+                        <p className="empty-category-text">Nenhum curso encontrado.</p>
+                      ) : (
+                        filteredCourses.map(c => (
+                          <div key={c.id} className="manage-item-row">
+                            <div className="item-main-info">
+                              <span className="item-title">{c.course.name}</span>
+                              <span className="item-meta">{c.course.campus} · {c.course.turno}</span>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-edit-item"
+                              onClick={() => handleEditCourse(c)}
+                              title="Editar este curso"
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                              <span>Editar</span>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+          ) : (
+            <form className="admin-form-card" onSubmit={handleSubmit}>
+              <div className="form-card-header">
+                <div className="form-card-header-main">
+                  <div>
+                    <h2>{activeTabInfo.label}</h2>
+                    <span className="form-card-hint">{activeTabInfo.desc}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={`btn-save-db ${result ? 'active' : ''}`}
+                    disabled={!result || savingDb}
+                    onClick={handleSaveToDb}
+                    title={result ? "Salvar dados no Banco de Dados" : "Extraia um documento primeiro para habilitar o envio ao banco"}
+                  >
+                    {savingDb ? (
+                      <>
+                        <span className="spinner-sm" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                          <polyline points="17 21 17 13 7 13 7 21" />
+                          <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        <span>Enviar ao Banco</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
 
-            {(activeTab === 'prova' || activeTab === 'edital' || activeTab === 'curso') && (
+              <div className="input-mode-switch-container">
+                <div className="input-mode-switch">
+                  <button
+                    type="button"
+                    className={`switch-option ${inputMode === 'pdf' ? 'active' : ''}`}
+                    onClick={() => { setInputMode('pdf'); setMessage({ type: '', text: '' }); }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span>Enviar PDF para extração</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`switch-option ${inputMode === 'text' ? 'active' : ''}`}
+                    onClick={() => { setInputMode('text'); setMessage({ type: '', text: '' }); }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    <span>Enviar Texto para extração</span>
+                  </button>
+                </div>
+              </div>
+
+              {activeTab === 'prova' && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Ano da Prova *</label>
+                    <input
+                      type="text"
+                      name="ano"
+                      placeholder="Ex: 2025"
+                      value={formData.ano}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Número do Exame *</label>
+                    <input
+                      type="text"
+                      name="exame_num"
+                      placeholder="Ex: 01"
+                      value={formData.exame_num}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="form-group">
                 <label>Título personalizado <span className="label-optional">(opcional — o robô detecta automaticamente)</span></label>
                 <input
@@ -235,376 +578,238 @@ export default function AdminPage() {
                   onChange={handleInputChange}
                 />
               </div>
-            )}
 
-            {(activeTab === 'edital' || activeTab === 'curso') && (
-              <div className="form-group">
-                <label>Instituição</label>
-                <input
-                  type="text"
-                  name="instituteName"
-                  placeholder="Ex: IFAL"
-                  value={formData.instituteName}
-                  onChange={handleInputChange}
-                />
-              </div>
-            )}
-
-            {(activeTab === 'prova' || activeTab === 'edital' || activeTab === 'curso') && (
-              <div className="form-group">
-                <label>Arquivo PDF *</label>
-                <div
-                  className={`drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-                  onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                >
+              {(activeTab === 'edital' || activeTab === 'curso') && (
+                <div className="form-group">
+                  <label>Instituição</label>
                   <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf"
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
+                    type="text"
+                    name="instituteName"
+                    placeholder="Ex: IFAL"
+                    value={formData.instituteName}
+                    onChange={handleInputChange}
                   />
-                  {file ? (
-                    <div className="drop-zone-file">
-                      <span className="drop-zone-icon">📄</span>
-                      <div>
-                        <p className="drop-zone-filename">{file.name}</p>
-                        <p className="drop-zone-size">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="drop-zone-empty">
-                      <span className="drop-zone-icon">📁</span>
-                      <p className="drop-zone-text">Arraste o PDF da prova aqui ou clique para procurar</p>
-                      <p className="drop-zone-hint">Suporte a PDFs de até 50 MB</p>
-                    </div>
-                  )}
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'prova' && (
-              <div className="form-group">
-                <label>PDF do Gabarito <span className="label-optional">(opcional — o robô extrai as respostas automaticamente)</span></label>
-                <div
-                  className={`drop-zone drop-zone-secondary ${isDraggingGab ? 'dragging' : ''} ${fileGabarito ? 'has-file' : ''}`}
-                  onDragOver={e => { e.preventDefault(); setIsDraggingGab(true); }}
-                  onDragLeave={() => setIsDraggingGab(false)}
-                  onDrop={handleDropGabarito}
-                  onClick={() => gabaritoInputRef.current?.click()}
-                >
-                  <input
-                    ref={gabaritoInputRef}
-                    type="file"
-                    accept="application/pdf"
-                    onChange={handleGabaritoChange}
-                    style={{ display: 'none' }}
-                  />
-                  {fileGabarito ? (
-                    <div className="drop-zone-file">
-                      <span className="drop-zone-icon">📊</span>
-                      <div>
-                        <p className="drop-zone-filename">{fileGabarito.name}</p>
-                        <p className="drop-zone-size">
-                          {(fileGabarito.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="drop-zone-empty compact">
-                      <span className="drop-zone-icon-sm">📑</span>
-                      <div>
-                        <p className="drop-zone-text">Arraste o PDF do Gabarito aqui ou clique para procurar</p>
-                        <p className="drop-zone-hint">Opcional — vincula as respostas automáticas</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'texto' && (
-              <div className="form-group">
-                <label>Cole ou digite seu texto *</label>
-                <textarea
-                  name="texto"
-                  rows={10}
-                  placeholder="Insira o conteúdo do texto para extração e estruturação..."
-                  value={formData.texto}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            )}
-
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? (
-                <><span className="btn-loader" />Processando...</>
-              ) : (
-                `🚀 Extrair ${activeTab === 'prova' ? 'Questões' : activeTab === 'edital' ? 'Edital' : activeTab === 'curso' ? 'Curso' : 'Texto'}`
               )}
-            </button>
-          </form>
 
-          {result && <ResultadoExtracao tipo={activeTab} dados={result} />}
-        </main>
-      </div>
-    </div>
-  );
-}
+              {inputMode === 'pdf' ? (
+                activeTab === 'prova' ? (
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Arquivo PDF da Prova *</label>
+                      <div
+                        className={`drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
+                        onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="application/pdf"
+                          onChange={handleFileChange}
+                          style={{ display: 'none' }}
+                        />
+                        {file ? (
+                          <div className="drop-zone-file">
+                            <span className="drop-zone-icon">📄</span>
+                            <div>
+                              <p className="drop-zone-filename">{file.name}</p>
+                              <p className="drop-zone-size">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="drop-zone-empty compact">
+                            <span className="drop-zone-icon-sm">📁</span>
+                            <div>
+                              <p className="drop-zone-text-sm">Arraste o PDF da Prova aqui ou clique para procurar</p>
+                              <p className="drop-zone-hint">Suporte a PDFs de até 50 MB</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-function ResultadoExtracao({ tipo, dados }) {
-  const [viewMode, setViewMode] = useState('visual');
+                    <div className="form-group">
+                      <label>PDF do Gabarito <span className="label-optional">(opcional)</span></label>
+                      <div
+                        className={`drop-zone ${isDraggingGab ? 'dragging' : ''} ${fileGabarito ? 'has-file' : ''}`}
+                        onDragOver={e => { e.preventDefault(); setIsDraggingGab(true); }}
+                        onDragLeave={() => setIsDraggingGab(false)}
+                        onDrop={handleDropGabarito}
+                        onClick={() => gabaritoInputRef.current?.click()}
+                      >
+                        <input
+                          ref={gabaritoInputRef}
+                          type="file"
+                          accept="application/pdf"
+                          onChange={handleGabaritoChange}
+                          style={{ display: 'none' }}
+                        />
+                        {fileGabarito ? (
+                          <div className="drop-zone-file">
+                            <span className="drop-zone-icon">📊</span>
+                            <div>
+                              <p className="drop-zone-filename">{fileGabarito.name}</p>
+                              <p className="drop-zone-size">
+                                {(fileGabarito.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="drop-zone-empty compact">
+                            <span className="drop-zone-icon-sm">📁</span>
+                            <div>
+                              <p className="drop-zone-text-sm">Arraste o PDF do Gabarito aqui ou clique para procurar</p>
+                              <p className="drop-zone-hint">Opcional — vincula as respostas automáticas</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="form-group">
+                    <label>Arquivo PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} *</label>
+                    <div
+                      className={`drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
+                      onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                      />
+                      {file ? (
+                        <div className="drop-zone-file">
+                          <span className="drop-zone-icon">📄</span>
+                          <div>
+                            <p className="drop-zone-filename">{file.name}</p>
+                            <p className="drop-zone-size">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="drop-zone-empty">
+                          <span className="drop-zone-icon">📁</span>
+                          <p className="drop-zone-text">
+                            Arraste o PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} aqui ou clique para procurar
+                          </p>
+                          <p className="drop-zone-hint">Suporte a PDFs de até 50 MB</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="form-group">
+                  <label>Texto para Extração *</label>
+                  <textarea
+                    name="texto"
+                    className="admin-textarea"
+                    placeholder={`Cole aqui o conteúdo completo ${activeTab === 'prova' ? 'da prova' : activeTab === 'edital' ? 'do edital' : 'do curso'} para processamento automático...`}
+                    value={formData.texto}
+                    onChange={handleInputChange}
+                    rows={10}
+                    required
+                  />
+                </div>
+              )}
 
-  return (
-    <div className="result-container">
-      <div className="result-header">
-        <div className="result-header-left">
-          <span className="result-badge">
-            {tipo === 'prova' ? '📋 Questões Extraídas' : tipo === 'edital' ? '📜 Edital Extraído' : tipo === 'curso' ? '🎓 Curso Extraído' : '📝 Texto Processado'}
-          </span>
-          {tipo === 'prova' && dados.questoes && (
-            <span className="result-count">{dados.questoes.length} questões</span>
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="spinner" />
+                    Processando com Inteligência Artificial...
+                  </>
+                ) : (
+                  `🚀 Extrair ${activeTabInfo.label.split(' ')[1] || 'Dados'}`
+                )}
+              </button>
+            </form>
           )}
-        </div>
-        <div className="result-view-toggle">
-          <button
-            className={`toggle-btn ${viewMode === 'visual' ? 'active' : ''}`}
-            onClick={() => setViewMode('visual')}
-          >Visual</button>
-          <button
-            className={`toggle-btn ${viewMode === 'json' ? 'active' : ''}`}
-            onClick={() => setViewMode('json')}
-          >JSON</button>
-        </div>
-      </div>
 
-      {viewMode === 'json' ? (
-        <div className="result-json">
-          {JSON.stringify(dados, null, 2)}
-        </div>
-      ) : (
-        <div className="result-visual">
-          {tipo === 'prova' && <VisualizacaoProva dados={dados} />}
-          {tipo === 'edital' && <VisualizacaoEdital dados={dados} />}
-          {tipo === 'curso' && <VisualizacaoCurso dados={dados} />}
-          {tipo === 'texto' && <VisualizacaoTexto dados={dados} />}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function VisualizacaoProva({ dados }) {
-  const [questaoAberta, setQuestaoAberta] = useState(null);
-  const [gabaritos, setGabaritos] = useState(() => {
-    const map = {};
-    (dados.questoes || []).forEach(q => {
-      map[q.numero_questao] = q.gabarito ?? 0;
-    });
-    return map;
-  });
-
-  const handleSelectGabarito = (numQuestao, idxLetra) => {
-    setGabaritos(prev => ({
-      ...prev,
-      [numQuestao]: idxLetra,
-    }));
-    const qObj = (dados.questoes || []).find(q => q.numero_questao === numQuestao);
-    if (qObj) {
-      qObj.gabarito = idxLetra;
-    }
-  };
-
-  const letras = ['A', 'B', 'C', 'D', 'E'];
-
-  return (
-    <div className="viz-prova">
-      <div className="viz-prova-header">
-        <div className="viz-info-row">
-          <span className="viz-label">Título detectado:</span>
-          <strong className="viz-value">{dados.titulo_detectado || '—'}</strong>
-        </div>
-        <div className="viz-info-row">
-          <span className="viz-label">Total de questões:</span>
-          <strong className="viz-value">{dados.total_questoes}</strong>
-        </div>
-      </div>
-
-      <div className="questoes-list">
-        {(dados.questoes || []).map((q) => {
-          const gabaritoAtual = gabaritos[q.numero_questao] ?? 0;
-          const letraAtual = letras[gabaritoAtual] || 'A';
-
-          return (
-            <div
-              key={q.numero_questao}
-              className={`questao-card ${questaoAberta === q.numero_questao ? 'open' : ''}`}
-            >
-              <button
-                className="questao-header"
-                type="button"
-                onClick={() => setQuestaoAberta(questaoAberta === q.numero_questao ? null : q.numero_questao)}
-              >
-                <span className="questao-num">Questão {q.numero_questao}</span>
-                <div className="questao-badges">
-                  <span className="badge badge-gabarito">
-                    ✅ Gabarito: {letraAtual}
+          {result && activeTab !== 'editar' && (
+            <div className="result-card">
+              <div className="result-header">
+                <h3>📊 Resultado da Extração / Visualização</h3>
+                {result.questoes && (
+                  <span className="result-count-badge">
+                    {result.questoes.length} questões encontradas
                   </span>
-                  {q.imagens?.length > 0 && (
-                    <span className="badge badge-img">🖼️ {q.imagens.length} img</span>
-                  )}
-                  {Object.keys(q.alternativas || {}).length > 0 && (
-                    <span className="badge badge-alt">{Object.keys(q.alternativas).length} alternativas</span>
+                )}
+              </div>
+
+              {result.questoes && (
+                <div className="questions-list">
+                  {result.questoes.map((q, idx) => (
+                    <div key={idx} className="question-item">
+                      <div className="question-item-header">
+                        <span className="q-number">Questão {idx + 1}</span>
+                        {q.correctAnswerIndex !== undefined && (
+                          <span className="q-answer-badge">
+                            Gabarito: Opção {q.correctAnswerIndex + 1}
+                          </span>
+                        )}
+                      </div>
+                      <p className="q-text">{q.text}</p>
+                      {q.options && (
+                        <ul className="q-options">
+                          {q.options.map((opt, oIdx) => (
+                            <li
+                              key={oIdx}
+                              className={oIdx === q.correctAnswerIndex ? 'correct' : ''}
+                            >
+                              <span className="opt-letter">
+                                {String.fromCharCode(65 + oIdx)})
+                              </span>{' '}
+                              {opt}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {result.edital && (
+                <div className="extracted-edital">
+                  <h4>{result.edital.title}</h4>
+                  <p className="edital-desc">{result.edital.description}</p>
+                  {result.edital.content && (
+                    <div
+                      className="edital-content-preview"
+                      dangerouslySetInnerHTML={{ __html: result.edital.content }}
+                    />
                   )}
                 </div>
-                <span className="questao-arrow">{questaoAberta === q.numero_questao ? '▲' : '▼'}</span>
-              </button>
+              )}
 
-              {questaoAberta === q.numero_questao && (
-                <div className="questao-body">
-                  {q.texto_de_apoio && q.texto_de_apoio.trim() !== '' && q.texto_de_apoio.trim() !== q.enunciado?.trim() && (
-                    <div className="questao-apoio">
-                      <span className="questao-section-label">Texto de apoio</span>
-                      {q.texto_de_apoio.split('\n\n').map((paragrafo, pIdx) => (
-                        <p key={pIdx}>{paragrafo}</p>
-                      ))}
-                    </div>
-                  )}
-
-                  {q.imagens?.length > 0 && (
-                    <div className="questao-imagens">
-                      {q.imagens.map((src, idx) => (
-                        <img key={idx} src={src} alt={`Imagem questão ${q.numero_questao}`} className="questao-img" />
-                      ))}
-                    </div>
-                  )}
-
-                  {q.enunciado && q.enunciado.trim() !== '' && (
-                    <div className="questao-enunciado">
-                      <span className="questao-section-label">Enunciado</span>
-                      <p>{q.enunciado}</p>
-                    </div>
-                  )}
-
-                  {q.creditos && q.creditos.trim() !== '' && (
-                    <div className="questao-creditos">
-                      <span className="questao-section-label">Créditos</span>
-                      <p>{q.creditos}</p>
-                    </div>
-                  )}
-
-                  <div className="alternativas-list">
-                    <span className="questao-section-label">
-                      Alternativas <span className="label-optional">(clique para definir resposta correta)</span>
-                    </span>
-                    {Object.entries(q.alternativas || {}).map(([letra, texto], idx) => {
-                      const isCorreta = gabaritoAtual === idx;
-                      return (
-                        <div
-                          key={letra}
-                          className={`alternativa-item ${isCorreta ? 'correta' : ''}`}
-                          onClick={() => handleSelectGabarito(q.numero_questao, idx)}
-                          title="Clique para marcar como resposta correta"
-                        >
-                          <span className={`alternativa-letra ${isCorreta ? 'is-correta' : ''}`}>
-                            {letra}
-                          </span>
-                          <span className="alternativa-texto">{texto}</span>
-                          {isCorreta && (
-                            <span className="correta-tag">✅ Resposta Correta</span>
-                          )}
-                        </div>
-                      );
-                    })}
+              {result.course && (
+                <div className="extracted-course">
+                  <h4>{result.course.title}</h4>
+                  <p>{result.course.description}</p>
+                  <div className="course-specs-grid">
+                    <div><strong>Campus:</strong> {result.course.campus}</div>
+                    <div><strong>Turno:</strong> {result.course.shift}</div>
+                    <div><strong>Modalidade:</strong> {result.course.modality}</div>
+                    <div><strong>Duração:</strong> {result.course.duration}</div>
                   </div>
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function VisualizacaoEdital({ dados }) {
-  return (
-    <div className="viz-simple">
-      <div className="viz-field">
-        <label>Título</label>
-        <p className="viz-field-value title">{dados.titulo || '—'}</p>
-      </div>
-      <div className="viz-field">
-        <label>Descrição</label>
-        <p className="viz-field-value">{dados.descricao || '—'}</p>
-      </div>
-      <div className="viz-row">
-        <div className="viz-field">
-          <label>Tempo de leitura</label>
-          <p className="viz-field-value">{dados.tempo_leitura || '—'}</p>
-        </div>
-        <div className="viz-field">
-          <label>Total de palavras</label>
-          <p className="viz-field-value">{dados.total_palavras || '—'}</p>
-        </div>
-        <div className="viz-field">
-          <label>Data detectada</label>
-          <p className="viz-field-value">{dados.data_publicacao || '—'}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function VisualizacaoCurso({ dados }) {
-  return (
-    <div className="viz-simple">
-      <div className="viz-field">
-        <label>Nome do curso</label>
-        <p className="viz-field-value title">{dados.nome_curso || '—'}</p>
-      </div>
-      <div className="viz-row">
-        <div className="viz-field">
-          <label>Campus</label>
-          <p className="viz-field-value">{dados.campus || '—'}</p>
-        </div>
-        <div className="viz-field">
-          <label>Turno</label>
-          <p className="viz-field-value">{dados.turno || '—'}</p>
-        </div>
-        <div className="viz-field">
-          <label>Modalidade</label>
-          <p className="viz-field-value">{dados.modalidade || '—'}</p>
-        </div>
-        <div className="viz-field">
-          <label>Duração</label>
-          <p className="viz-field-value">{dados.duracao || '—'}</p>
-        </div>
-        <div className="viz-field">
-          <label>Grau</label>
-          <p className="viz-field-value">{dados.grau || '—'}</p>
-        </div>
-      </div>
-      <div className="viz-field">
-        <label>Descrição</label>
-        <p className="viz-field-value">{dados.descricao || '—'}</p>
-      </div>
-    </div>
-  );
-}
-
-function VisualizacaoTexto({ dados }) {
-  return (
-    <div className="viz-simple">
-      <div className="viz-field">
-        <label>Texto estruturado</label>
-        <pre className="viz-text-pre">{dados.conteudo || '—'}</pre>
+          )}
+        </main>
       </div>
     </div>
   );
