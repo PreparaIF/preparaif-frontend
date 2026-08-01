@@ -443,7 +443,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* MODO EDITAR REGISTROS (LISTAGEM DO BANCO) */}
           {activeTab === 'editar' ? (
             <div className="admin-form-card">
               <div className="form-card-header">
