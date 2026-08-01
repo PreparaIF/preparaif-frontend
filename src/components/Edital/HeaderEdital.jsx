@@ -4,11 +4,9 @@ import ButtonVoltar from "../Utils/ButtonVoltar";
 function HeaderEdital({ title }) {
   return (
     <div className="header-edital">
-      <div className="top-navigation-bar">
-        <ButtonVoltar />
-      </div>
       <header className="details-header">
         <div className="header-text-content">
+          <ButtonVoltar />
           <span className="source-info">
             Informações extraídas do Portal do Ifal
           </span>

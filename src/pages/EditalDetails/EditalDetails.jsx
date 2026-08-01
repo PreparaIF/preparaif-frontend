@@ -43,12 +43,9 @@ function EditalDetails() {
 
   return (
     <div className="edict-page-container">
-      <div className="top-navigation-bar">
-        <ButtonVoltar />
-      </div>
-
       <div className="edict-content-split">
         <div className="edict-left-col">
+          <ButtonVoltar />
           <span className="source-info">
             Informações extraídas do Portal do Ifal
           </span>
