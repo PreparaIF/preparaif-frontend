@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { uploadDocumento } from '../../services/upload';
+import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './AdminPage.css';
 
 const TABS = [
@@ -138,6 +139,9 @@ export default function AdminPage() {
 
   return (
     <div className="admin-page">
+      <div className="admin-top-bar">
+        <ButtonVoltar />
+      </div>
       <div className="admin-hero">
         <span className="admin-badge">Extração de PDFs</span>
         <h1 className="admin-title">Processamento de Documentos</h1>

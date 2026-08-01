@@ -22,8 +22,10 @@ function LastExams() {
 
   return (
     <div className="last-exams-page">
-      <header className="last-exams-header">
+      <div className="top-navigation-bar">
         <ButtonVoltar />
+      </div>
+      <header className="last-exams-header">
         <h1 className="last-exams-page-title">Provas Anteriores</h1>
       </header>
 

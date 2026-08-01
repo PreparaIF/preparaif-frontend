@@ -1,5 +1,7 @@
 import { apiGet } from "./api";
 
+let examsCache = null;
+
 function mapExam(exam) {
   return {
     id: exam.id,
@@ -13,12 +15,25 @@ function mapExam(exam) {
   };
 }
 
-export async function fetchExams() {
+export async function fetchExams(forceRefresh = false) {
+  if (examsCache && !forceRefresh) {
+    return examsCache;
+  }
   const data = await apiGet("/exams");
-  return data.map(mapExam);
+  examsCache = data.map(mapExam);
+  return examsCache;
 }
 
 export async function fetchExamById(id) {
+  if (examsCache) {
+    const found = examsCache.find((c) => String(c.id) === String(id));
+    if (found) return found;
+  }
+
   const data = await apiGet(`/exams/${id}`);
   return mapExam(data);
+}
+
+export function clearExamsCache() {
+  examsCache = null;
 }

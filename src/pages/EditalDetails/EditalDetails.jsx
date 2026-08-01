@@ -43,7 +43,9 @@ function EditalDetails() {
 
   return (
     <div className="edict-page-container">
-      <ButtonVoltar />
+      <div className="top-navigation-bar">
+        <ButtonVoltar />
+      </div>
 
       <div className="edict-content-split">
         <div className="edict-left-col">

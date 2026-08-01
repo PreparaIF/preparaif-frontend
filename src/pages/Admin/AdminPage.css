@@ -20,9 +20,18 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+.admin-top-bar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+}
+
 .admin-hero {
   text-align: center;
-  padding: 60px 24px 40px;
+  padding: 30px 24px 40px;
 }
 
 .admin-badge {
