@@ -5,10 +5,22 @@
   margin-bottom: 32px;
 }
 
+.header-text-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 0;
+  flex: 1;
+}
+
+.header-text-content-inner {
+  gap: 24px;
+}
+
 .edital-main-title {
   font-family: var(--font-display);
   color: var(--color-ink);
-  font-size: 2.6rem;
+  font-size: 2.4rem;
   font-weight: 700;
   line-height: 1.25;
   margin: 0 0 20px 0;

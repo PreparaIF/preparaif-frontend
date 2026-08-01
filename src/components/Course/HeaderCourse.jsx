@@ -4,9 +4,11 @@ import ButtonVoltar from "../Utils/ButtonVoltar";
 function HeaderCourse({ title, image }) {
   return (
     <div className="header-course">
+      <div className="edict-top-nav">
+        <ButtonVoltar />
+      </div>
       <header className="details-header">
         <div className="header-text-content">
-          <ButtonVoltar />
           <div className="header-text-content-inner">
             <span className="source-info">
               Informações extraídas do Portal do Ifal
