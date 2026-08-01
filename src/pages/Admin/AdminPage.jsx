@@ -14,19 +14,18 @@ const TABS = [
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('prova');
-  const [inputMode, setInputMode] = useState('pdf'); // 'pdf' | 'text'
+  const [inputMode, setInputMode] = useState('pdf');
   const [loading, setLoading] = useState(false);
   const [savingDb, setSavingDb] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [result, setResult] = useState(null);
+  const [isEditingExisting, setIsEditingExisting] = useState(false);
 
-  // Manage DB Records state
   const [dbSearchTerm, setDbSearchTerm] = useState('');
   const [dbExams, setDbExams] = useState([]);
   const [dbEditais, setDbEditais] = useState([]);
   const [dbCourses, setDbCourses] = useState([]);
 
-  // Accordion state for categories (starts with ALL closed by default)
   const [openCategories, setOpenCategories] = useState({
     prova: false,
     edital: false,
@@ -154,6 +153,7 @@ export default function AdminPage() {
     setResult(null);
     setFile(null);
     setFileGabarito(null);
+    setIsEditingExisting(false);
     setFormData({ ano: '', exame_num: '', texto: '', titulo_personalizado: '', instituteName: 'IFAL' });
   };
 
@@ -162,6 +162,7 @@ export default function AdminPage() {
     setLoading(true);
     setMessage({ type: '', text: '' });
     setResult(null);
+    setIsEditingExisting(false);
 
     try {
       if (activeTab === 'prova' && (!formData.ano || !formData.exame_num)) {
@@ -188,7 +189,7 @@ export default function AdminPage() {
 
       const res = await uploadDocumento(activeTab, inputMode === 'pdf' ? file : null, metadata);
 
-      const msgTexto = res.mensagem || 'Extração concluída com sucesso! Clique em "Enviar ao Banco" no canto superior direito para salvar.';
+      const msgTexto = res.mensagem || 'Extração concluída com sucesso! Ajuste os campos abaixo se desejar e clique em "Enviar ao Banco".';
       setMessage({ type: 'success', text: msgTexto });
       setResult(res.dados);
 
@@ -239,21 +240,66 @@ export default function AdminPage() {
     }
   };
 
+  const updateQuestionText = (index, newText) => {
+    setResult(prev => {
+      if (!prev || !prev.questoes) return prev;
+      const newQuestoes = [...prev.questoes];
+      newQuestoes[index] = { ...newQuestoes[index], text: newText };
+      return { ...prev, questoes: newQuestoes };
+    });
+  };
+
+  const updateQuestionOption = (qIdx, oIdx, newOptText) => {
+    setResult(prev => {
+      if (!prev || !prev.questoes) return prev;
+      const newQuestoes = [...prev.questoes];
+      const newOptions = [...(newQuestoes[qIdx].options || [])];
+      newOptions[oIdx] = newOptText;
+      newQuestoes[qIdx] = { ...newQuestoes[qIdx], options: newOptions };
+      return { ...prev, questoes: newQuestoes };
+    });
+  };
+
+  const updateQuestionGabarito = (qIdx, newGabaritoIndex) => {
+    setResult(prev => {
+      if (!prev || !prev.questoes) return prev;
+      const newQuestoes = [...prev.questoes];
+      newQuestoes[qIdx] = { ...newQuestoes[qIdx], correctAnswerIndex: newGabaritoIndex };
+      return { ...prev, questoes: newQuestoes };
+    });
+  };
+
+  const updateEditalField = (field, value) => {
+    setResult(prev => {
+      if (!prev || !prev.edital) return prev;
+      return { ...prev, edital: { ...prev.edital, [field]: value } };
+    });
+  };
+
+  const updateCourseField = (field, value) => {
+    setResult(prev => {
+      if (!prev || !prev.course) return prev;
+      return { ...prev, course: { ...prev.course, [field]: value } };
+    });
+  };
+
   const handleEditExam = (item) => {
     setActiveTab('prova');
+    setIsEditingExisting(true);
     setFormData({
       ano: item.title.match(/\d{4}/)?.[0] || '',
-      exame_num: item.title.match(/exame\s*(\d+)/i)?.[1] || '',
+      exame_num: item.title.match(/exame\s*(\d+)/i)?.[1] || '01',
       texto: '',
       titulo_personalizado: item.title,
       instituteName: 'IFAL',
     });
     setResult({ questoes: item.questions || [] });
-    setMessage({ type: 'success', text: `Prova "${item.title}" carregada para edição.` });
+    setMessage({ type: 'success', text: `Prova "${item.title}" carregada do banco. Edite os campos abaixo e clique em "Salvar Alterações no Banco".` });
   };
 
   const handleEditEdital = (item) => {
     setActiveTab('edital');
+    setIsEditingExisting(true);
     setFormData({
       ano: '',
       exame_num: '',
@@ -262,11 +308,12 @@ export default function AdminPage() {
       instituteName: 'IFAL',
     });
     setResult({ edital: item });
-    setMessage({ type: 'success', text: `Edital "${item.title}" carregado para edição.` });
+    setMessage({ type: 'success', text: `Edital "${item.title}" carregado do banco. Edite os campos abaixo e clique em "Salvar Alterações no Banco".` });
   };
 
   const handleEditCourse = (item) => {
     setActiveTab('curso');
+    setIsEditingExisting(true);
     setFormData({
       ano: '',
       exame_num: '',
@@ -284,7 +331,7 @@ export default function AdminPage() {
         duration: item.course.specs?.duracao || '4 anos',
       }
     });
-    setMessage({ type: 'success', text: `Curso "${item.course.name}" carregado para edição.` });
+    setMessage({ type: 'success', text: `Curso "${item.course.name}" carregado do banco. Edite os campos abaixo e clique em "Salvar Alterações no Banco".` });
   };
 
   const activeTabInfo = TABS.find(t => t.id === activeTab) || {
@@ -339,6 +386,7 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* MODO EDITAR REGISTROS (LISTAGEM DO BANCO) */}
           {activeTab === 'editar' ? (
             <div className="admin-form-card">
               <div className="form-card-header">
@@ -359,6 +407,7 @@ export default function AdminPage() {
               </div>
 
               <div className="manage-categories-grid">
+                {/* Seção 1: Provas */}
                 <div className="manage-category-card">
                   <button
                     type="button"
@@ -399,6 +448,7 @@ export default function AdminPage() {
                   )}
                 </div>
 
+                {/* Seção 2: Editais */}
                 <div className="manage-category-card">
                   <button
                     type="button"
@@ -439,6 +489,7 @@ export default function AdminPage() {
                   )}
                 </div>
 
+                {/* Seção 3: Cursos */}
                 <div className="manage-category-card">
                   <button
                     type="button"
@@ -485,62 +536,91 @@ export default function AdminPage() {
               <div className="form-card-header">
                 <div className="form-card-header-main">
                   <div>
-                    <h2>{activeTabInfo.label}</h2>
-                    <span className="form-card-hint">{activeTabInfo.desc}</span>
+                    <h2>
+                      {isEditingExisting ? `✏️ Edição de ${activeTabInfo.label}` : activeTabInfo.label}
+                    </h2>
+                    <span className="form-card-hint">
+                      {isEditingExisting
+                        ? 'Edite as informações abaixo e clique em "Salvar Alterações no Banco".'
+                        : activeTabInfo.desc}
+                    </span>
                   </div>
-                  <button
-                    type="button"
-                    className={`btn-save-db ${result ? 'active' : ''}`}
-                    disabled={!result || savingDb}
-                    onClick={handleSaveToDb}
-                    title={result ? "Salvar dados no Banco de Dados" : "Extraia um documento primeiro para habilitar o envio ao banco"}
-                  >
-                    {savingDb ? (
-                      <>
-                        <span className="spinner-sm" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                          <polyline points="17 21 17 13 7 13 7 21" />
-                          <polyline points="7 3 7 8 15 8" />
+
+                  {isEditingExisting ? (
+                    <button
+                      type="button"
+                      className="btn-cancel-edit"
+                      onClick={() => {
+                        setIsEditingExisting(false);
+                        setResult(null);
+                        setMessage({ type: '', text: '' });
+                      }}
+                      title="Cancelar edição e voltar para novo upload"
+                    >
+                      ❌ Cancelar Edição
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={`btn-save-db ${result ? 'active' : ''}`}
+                      disabled={!result || savingDb}
+                      onClick={handleSaveToDb}
+                      title={result ? "Salvar dados no Banco de Dados" : "Extraia um documento primeiro para habilitar o envio ao banco"}
+                    >
+                      {savingDb ? (
+                        <>
+                          <span className="spinner-sm" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          <span>Enviar ao Banco</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* SE NÃO ESTIVER EDITANDO: MOSTRA SWITCH E UPLOAD DE ARQUIVOS */}
+              {!isEditingExisting && (
+                <>
+                  {/* Switch Moderno (Segmented Control Centralizado) */}
+                  <div className="input-mode-switch-container">
+                    <div className="input-mode-switch">
+                      <button
+                        type="button"
+                        className={`switch-option ${inputMode === 'pdf' ? 'active' : ''}`}
+                        onClick={() => { setInputMode('pdf'); setMessage({ type: '', text: '' }); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
                         </svg>
-                        <span>Enviar ao Banco</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+                        <span>Enviar PDF para extração</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`switch-option ${inputMode === 'text' ? 'active' : ''}`}
+                        onClick={() => { setInputMode('text'); setMessage({ type: '', text: '' }); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        <span>Enviar Texto para extração</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
 
-              <div className="input-mode-switch-container">
-                <div className="input-mode-switch">
-                  <button
-                    type="button"
-                    className={`switch-option ${inputMode === 'pdf' ? 'active' : ''}`}
-                    onClick={() => { setInputMode('pdf'); setMessage({ type: '', text: '' }); }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    <span>Enviar PDF para extração</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`switch-option ${inputMode === 'text' ? 'active' : ''}`}
-                    onClick={() => { setInputMode('text'); setMessage({ type: '', text: '' }); }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    <span>Enviar Texto para extração</span>
-                  </button>
-                </div>
-              </div>
-
+              {/* CAMPOS DE METADADOS (ANO, EXAME, TÍTULO, INSTITUIÇÃO) */}
               {activeTab === 'prova' && (
                 <div className="form-row">
                   <div className="form-group">
@@ -592,218 +672,336 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {inputMode === 'pdf' ? (
-                activeTab === 'prova' ? (
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Arquivo PDF da Prova *</label>
-                      <div
-                        className={`drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-                        onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-                        onDragLeave={() => setIsDragging(false)}
-                        onDrop={handleDrop}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="application/pdf"
-                          onChange={handleFileChange}
-                          style={{ display: 'none' }}
-                        />
-                        {file ? (
-                          <div className="drop-zone-file">
-                            <span className="drop-zone-icon">📄</span>
-                            <div>
-                              <p className="drop-zone-filename">{file.name}</p>
-                              <p className="drop-zone-size">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
-                              </p>
-                            </div>
+              {/* SE NÃO ESTIVER EDITANDO: MOSTRA ZONA DE UPLOAD DE ARQUIVOS E BOTÃO DE EXTRAÇÃO */}
+              {!isEditingExisting && (
+                <>
+                  {inputMode === 'pdf' ? (
+                    activeTab === 'prova' ? (
+                      /* Lado a Lado para Prova + Gabarito */
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Arquivo PDF da Prova *</label>
+                          <div
+                            className={`drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
+                            onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="application/pdf"
+                              onChange={handleFileChange}
+                              style={{ display: 'none' }}
+                            />
+                            {file ? (
+                              <div className="drop-zone-file">
+                                <span className="drop-zone-icon">📄</span>
+                                <div>
+                                  <p className="drop-zone-filename">{file.name}</p>
+                                  <p className="drop-zone-size">
+                                    {(file.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="drop-zone-empty compact">
+                                <span className="drop-zone-icon-sm">📁</span>
+                                <div>
+                                  <p className="drop-zone-text-sm">Arraste o PDF da Prova aqui ou clique para procurar</p>
+                                  <p className="drop-zone-hint">Suporte a PDFs de até 50 MB</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        ) : (
-                          <div className="drop-zone-empty compact">
-                            <span className="drop-zone-icon-sm">📁</span>
-                            <div>
-                              <p className="drop-zone-text-sm">Arraste o PDF da Prova aqui ou clique para procurar</p>
+                        </div>
+
+                        <div className="form-group">
+                          <label>PDF do Gabarito <span className="label-optional">(opcional)</span></label>
+                          <div
+                            className={`drop-zone ${isDraggingGab ? 'dragging' : ''} ${fileGabarito ? 'has-file' : ''}`}
+                            onDragOver={e => { e.preventDefault(); setIsDraggingGab(true); }}
+                            onDragLeave={() => setIsDraggingGab(false)}
+                            onDrop={handleDropGabarito}
+                            onClick={() => gabaritoInputRef.current?.click()}
+                          >
+                            <input
+                              ref={gabaritoInputRef}
+                              type="file"
+                              accept="application/pdf"
+                              onChange={handleGabaritoChange}
+                              style={{ display: 'none' }}
+                            />
+                            {fileGabarito ? (
+                              <div className="drop-zone-file">
+                                <span className="drop-zone-icon">📊</span>
+                                <div>
+                                  <p className="drop-zone-filename">{fileGabarito.name}</p>
+                                  <p className="drop-zone-size">
+                                    {(fileGabarito.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="drop-zone-empty compact">
+                                <span className="drop-zone-icon-sm">📁</span>
+                                <div>
+                                  <p className="drop-zone-text-sm">Arraste o PDF do Gabarito aqui ou clique para procurar</p>
+                                  <p className="drop-zone-hint">Opcional — vincula as respostas automáticas</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* PDF único para Edital ou Curso */
+                      <div className="form-group">
+                        <label>Arquivo PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} *</label>
+                        <div
+                          className={`drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
+                          onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                          onDragLeave={() => setIsDragging(false)}
+                          onDrop={handleDrop}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="application/pdf"
+                            onChange={handleFileChange}
+                            style={{ display: 'none' }}
+                          />
+                          {file ? (
+                            <div className="drop-zone-file">
+                              <span className="drop-zone-icon">📄</span>
+                              <div>
+                                <p className="drop-zone-filename">{file.name}</p>
+                                <p className="drop-zone-size">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="drop-zone-empty">
+                              <span className="drop-zone-icon">📁</span>
+                              <p className="drop-zone-text">
+                                Arraste o PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} aqui ou clique para procurar
+                              </p>
                               <p className="drop-zone-hint">Suporte a PDFs de até 50 MB</p>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-
+                    )
+                  ) : (
                     <div className="form-group">
-                      <label>PDF do Gabarito <span className="label-optional">(opcional)</span></label>
-                      <div
-                        className={`drop-zone ${isDraggingGab ? 'dragging' : ''} ${fileGabarito ? 'has-file' : ''}`}
-                        onDragOver={e => { e.preventDefault(); setIsDraggingGab(true); }}
-                        onDragLeave={() => setIsDraggingGab(false)}
-                        onDrop={handleDropGabarito}
-                        onClick={() => gabaritoInputRef.current?.click()}
-                      >
-                        <input
-                          ref={gabaritoInputRef}
-                          type="file"
-                          accept="application/pdf"
-                          onChange={handleGabaritoChange}
-                          style={{ display: 'none' }}
-                        />
-                        {fileGabarito ? (
-                          <div className="drop-zone-file">
-                            <span className="drop-zone-icon">📊</span>
-                            <div>
-                              <p className="drop-zone-filename">{fileGabarito.name}</p>
-                              <p className="drop-zone-size">
-                                {(fileGabarito.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="drop-zone-empty compact">
-                            <span className="drop-zone-icon-sm">📁</span>
-                            <div>
-                              <p className="drop-zone-text-sm">Arraste o PDF do Gabarito aqui ou clique para procurar</p>
-                              <p className="drop-zone-hint">Opcional — vincula as respostas automáticas</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="form-group">
-                    <label>Arquivo PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} *</label>
-                    <div
-                      className={`drop-zone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-                      onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-                      onDragLeave={() => setIsDragging(false)}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="application/pdf"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
+                      <label>Texto para Extração *</label>
+                      <textarea
+                        name="texto"
+                        className="admin-textarea"
+                        placeholder={`Cole aqui o conteúdo completo ${activeTab === 'prova' ? 'da prova' : activeTab === 'edital' ? 'do edital' : 'do curso'} para processamento automático...`}
+                        value={formData.texto}
+                        onChange={handleInputChange}
+                        rows={10}
+                        required
                       />
-                      {file ? (
-                        <div className="drop-zone-file">
-                          <span className="drop-zone-icon">📄</span>
-                          <div>
-                            <p className="drop-zone-filename">{file.name}</p>
-                            <p className="drop-zone-size">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB · Clique para trocar
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="drop-zone-empty">
-                          <span className="drop-zone-icon">📁</span>
-                          <p className="drop-zone-text">
-                            Arraste o PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} aqui ou clique para procurar
-                          </p>
-                          <p className="drop-zone-hint">Suporte a PDFs de até 50 MB</p>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                )
-              ) : (
-                <div className="form-group">
-                  <label>Texto para Extração *</label>
-                  <textarea
-                    name="texto"
-                    className="admin-textarea"
-                    placeholder={`Cole aqui o conteúdo completo ${activeTab === 'prova' ? 'da prova' : activeTab === 'edital' ? 'do edital' : 'do curso'} para processamento automático...`}
-                    value={formData.texto}
-                    onChange={handleInputChange}
-                    rows={10}
-                    required
-                  />
-                </div>
-              )}
+                  )}
 
-              <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="spinner" />
-                    Processando com Inteligência Artificial...
-                  </>
-                ) : (
-                  `🚀 Extrair ${activeTabInfo.label.split(' ')[1] || 'Dados'}`
-                )}
-              </button>
+                  <button type="submit" className="submit-btn" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <span className="spinner" />
+                        Processando com Inteligência Artificial...
+                      </>
+                    ) : (
+                      `🚀 Extrair ${activeTabInfo.label.split(' ')[1] || 'Dados'}`
+                    )}
+                  </button>
+                </>
+              )}
             </form>
           )}
 
+          {/* Resultado Editável / Visualização */}
           {result && activeTab !== 'editar' && (
             <div className="result-card">
               <div className="result-header">
-                <h3>📊 Resultado da Extração / Visualização</h3>
-                {result.questoes && (
-                  <span className="result-count-badge">
-                    {result.questoes.length} questões encontradas
-                  </span>
-                )}
+                <div className="result-header-title">
+                  <h3>📊 {isEditingExisting ? 'Edição de Registro' : 'Resultado da Extração'}</h3>
+                  {result.questoes && (
+                    <span className="result-count-badge">
+                      {result.questoes.length} questões
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="btn-save-db active"
+                  disabled={savingDb}
+                  onClick={handleSaveToDb}
+                >
+                  {savingDb ? 'Salvando...' : '💾 Salvar Alterações no Banco'}
+                </button>
               </div>
 
+              {/* SE FOR PROVA (QUESTÕES EDITÁVEIS) */}
               {result.questoes && (
                 <div className="questions-list">
                   {result.questoes.map((q, idx) => (
-                    <div key={idx} className="question-item">
+                    <div key={idx} className="question-item edit-mode-q">
                       <div className="question-item-header">
                         <span className="q-number">Questão {idx + 1}</span>
-                        {q.correctAnswerIndex !== undefined && (
-                          <span className="q-answer-badge">
-                            Gabarito: Opção {q.correctAnswerIndex + 1}
-                          </span>
-                        )}
+                        <div className="q-gabarito-select-wrapper">
+                          <label className="gabarito-label">Gabarito:</label>
+                          <select
+                            className="gabarito-select-input"
+                            value={q.correctAnswerIndex ?? 0}
+                            onChange={e => updateQuestionGabarito(idx, Number(e.target.value))}
+                          >
+                            {(q.options || ['Opção A', 'Opção B', 'Opção C', 'Opção D']).map((_, oIdx) => (
+                              <option key={oIdx} value={oIdx}>
+                                Opção {String.fromCharCode(65 + oIdx)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
-                      <p className="q-text">{q.text}</p>
+
+                      <div className="edit-q-block">
+                        <label className="edit-label">Enunciado da Questão:</label>
+                        <textarea
+                          className="edit-q-textarea"
+                          value={q.text || ''}
+                          onChange={e => updateQuestionText(idx, e.target.value)}
+                          rows={3}
+                          placeholder="Enunciado da questão..."
+                        />
+                      </div>
+
                       {q.options && (
-                        <ul className="q-options">
+                        <div className="edit-options-list">
+                          <label className="edit-label">Alternativas de Resposta:</label>
                           {q.options.map((opt, oIdx) => (
-                            <li
+                            <div
                               key={oIdx}
-                              className={oIdx === q.correctAnswerIndex ? 'correct' : ''}
+                              className={`edit-option-row ${oIdx === q.correctAnswerIndex ? 'is-correct' : ''}`}
                             >
-                              <span className="opt-letter">
-                                {String.fromCharCode(65 + oIdx)})
-                              </span>{' '}
-                              {opt}
-                            </li>
+                              <span className="opt-letter-badge">
+                                {String.fromCharCode(65 + oIdx)}
+                              </span>
+                              <input
+                                type="text"
+                                className="edit-option-input"
+                                value={opt}
+                                onChange={e => updateQuestionOption(idx, oIdx, e.target.value)}
+                                placeholder={`Alternativa ${String.fromCharCode(65 + oIdx)}...`}
+                              />
+                              {oIdx === q.correctAnswerIndex && (
+                                <span className="correct-tag">✓ Correta</span>
+                              )}
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       )}
                     </div>
                   ))}
                 </div>
               )}
 
+              {/* SE FOR EDITAL EDITÁVEL */}
               {result.edital && (
-                <div className="extracted-edital">
-                  <h4>{result.edital.title}</h4>
-                  <p className="edital-desc">{result.edital.description}</p>
-                  {result.edital.content && (
-                    <div
-                      className="edital-content-preview"
-                      dangerouslySetInnerHTML={{ __html: result.edital.content }}
+                <div className="extracted-edital edit-mode-edital">
+                  <div className="edit-q-block">
+                    <label className="edit-label">Título do Edital:</label>
+                    <input
+                      type="text"
+                      className="edit-option-input"
+                      value={result.edital.title || ''}
+                      onChange={e => updateEditalField('title', e.target.value)}
                     />
-                  )}
+                  </div>
+                  <div className="edit-q-block" style={{ marginTop: '12px' }}>
+                    <label className="edit-label">Descrição Resumida:</label>
+                    <textarea
+                      className="edit-q-textarea"
+                      value={result.edital.description || ''}
+                      onChange={e => updateEditalField('description', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="edit-q-block" style={{ marginTop: '12px' }}>
+                    <label className="edit-label">Conteúdo do Edital (HTML / Texto):</label>
+                    <textarea
+                      className="edit-q-textarea"
+                      value={result.edital.content || ''}
+                      onChange={e => updateEditalField('content', e.target.value)}
+                      rows={8}
+                    />
+                  </div>
                 </div>
               )}
 
+              {/* SE FOR CURSO EDITÁVEL */}
               {result.course && (
-                <div className="extracted-course">
-                  <h4>{result.course.title}</h4>
-                  <p>{result.course.description}</p>
-                  <div className="course-specs-grid">
-                    <div><strong>Campus:</strong> {result.course.campus}</div>
-                    <div><strong>Turno:</strong> {result.course.shift}</div>
-                    <div><strong>Modalidade:</strong> {result.course.modality}</div>
-                    <div><strong>Duração:</strong> {result.course.duration}</div>
+                <div className="extracted-course edit-mode-course">
+                  <div className="edit-q-block">
+                    <label className="edit-label">Nome do Curso:</label>
+                    <input
+                      type="text"
+                      className="edit-option-input"
+                      value={result.course.title || ''}
+                      onChange={e => updateCourseField('title', e.target.value)}
+                    />
+                  </div>
+                  <div className="edit-q-block" style={{ marginTop: '12px' }}>
+                    <label className="edit-label">Descrição do Curso:</label>
+                    <textarea
+                      className="edit-q-textarea"
+                      value={result.course.description || ''}
+                      onChange={e => updateCourseField('description', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="course-specs-grid" style={{ marginTop: '16px' }}>
+                    <div>
+                      <label className="edit-label">Campus:</label>
+                      <input
+                        type="text"
+                        className="edit-option-input"
+                        value={result.course.campus || ''}
+                        onChange={e => updateCourseField('campus', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="edit-label">Turno:</label>
+                      <input
+                        type="text"
+                        className="edit-option-input"
+                        value={result.course.shift || ''}
+                        onChange={e => updateCourseField('shift', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="edit-label">Modalidade:</label>
+                      <input
+                        type="text"
+                        className="edit-option-input"
+                        value={result.course.modality || ''}
+                        onChange={e => updateCourseField('modality', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="edit-label">Duração:</label>
+                      <input
+                        type="text"
+                        className="edit-option-input"
+                        value={result.course.duration || ''}
+                        onChange={e => updateCourseField('duration', e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
               )}

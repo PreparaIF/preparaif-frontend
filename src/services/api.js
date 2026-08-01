@@ -33,9 +33,7 @@ export async function apiUpload(path, formData) {
 
   if (!response.ok) {
     let err = {};
-    try { err = await response.json(); } catch {
-      // resposta sem corpo JSON
-    }
+    try { err = await response.json(); } catch { }
     throw new Error(err.error || err.detail || `Erro ${response.status}`);
   }
 
