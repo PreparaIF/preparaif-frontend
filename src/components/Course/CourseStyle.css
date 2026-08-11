@@ -49,6 +49,25 @@
   box-shadow: 0 10px 24px rgba(27, 42, 34, 0.1);
 }
 
+.courses-section {
+  padding: 0 0 8px;
+}
+
+.courses-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.courses-section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 2vw, 1.5rem);
+  font-weight: 700;
+  color: var(--color-ink);
+  margin: 0;
+}
+
 .courses-filters {
   display: flex;
   flex-wrap: wrap;

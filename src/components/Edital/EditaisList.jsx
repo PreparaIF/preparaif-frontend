@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { fetchEditais } from "../../services/edital";
 import EditalCard from "./EditalCard";
 import LoadingSpinner from "../Utils/LoadingSpinner";
+import { matchEdital } from "../../utils/searchUtils";
 import "./EditalStyle.css";
 
-export default function EditaisList() {
+export default function EditaisList({ searchTerm = "" }) {
   const [editais, setEditais] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,6 +16,13 @@ export default function EditaisList() {
       .finally(() => setLoading(false));
   }, []);
 
+  const filteredEditais = editais.filter((edital) => matchEdital(edital, searchTerm));
+
+  const isSearching = Boolean(searchTerm.trim());
+  if (isSearching && filteredEditais.length === 0) {
+    return null;
+  }
+
   return (
     <section className="editais">
       <div className="editais-header">
@@ -23,11 +31,11 @@ export default function EditaisList() {
 
       <div className="editais-container">
         {loading && <LoadingSpinner text="Carregando editais..." />}
-        {!loading && editais.length === 0 && (
+        {!loading && filteredEditais.length === 0 && (
           <p className="editais-empty">Nenhum edital foi encontrado.</p>
         )}
         {!loading &&
-          editais.map((edital) => (
+          filteredEditais.map((edital) => (
             <EditalCard key={edital.id} edital={edital} />
           ))}
       </div>

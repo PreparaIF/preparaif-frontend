@@ -2,16 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { fetchCourses } from "../../services/courses";
 import CourseCard from "./CourseCard";
 import LoadingSpinner from "../Utils/LoadingSpinner";
+import { matchCourse } from "../../utils/searchUtils";
 import "./CourseStyle.css";
 
 const PAGE_SIZE = 6;
-
-function normalize(str) {
-  return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
 
 export default function CoursesList({ searchTerm = "" }) {
   const [courses, setCourses] = useState([]);
@@ -42,7 +36,7 @@ export default function CoursesList({ searchTerm = "" }) {
   );
 
   const filteredCourses = courses.filter((c) => {
-    const matchesSearch = normalize(c.course.name).includes(normalize(searchTerm));
+    const matchesSearch = matchCourse(c, searchTerm);
     const matchesTurno = !turnoFilter || c.course.turno === turnoFilter;
     const matchesCampus = !campusFilter || c.course.campus === campusFilter;
     const matchesTipo = !tipoFilter || c.course.tipo === tipoFilter;
@@ -59,9 +53,18 @@ export default function CoursesList({ searchTerm = "" }) {
 
   if (loading) return <LoadingSpinner text="Carregando cursos..." />;
 
+  const isSearching = Boolean(searchTerm.trim());
+  if (isSearching && filteredCourses.length === 0) {
+    return null;
+  }
+
   return (
-    <>
-      <div className="courses-filters">
+    <section className="courses-section">
+      <div className="courses-section-header">
+        <h2 className="courses-section-title">Cursos Disponíveis</h2>
+      </div>
+      <>
+        <div className="courses-filters">
         <select value={tipoFilter} onChange={handleFilterChange(setTipoFilter)}>
           <option value="">Todos os tipos</option>
           {tipos.map((t) => (
@@ -117,6 +120,7 @@ export default function CoursesList({ searchTerm = "" }) {
           </button>
         </div>
       )}
-    </>
+      </>
+    </section>
   );
 }
