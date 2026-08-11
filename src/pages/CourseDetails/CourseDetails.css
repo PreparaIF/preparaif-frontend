@@ -17,29 +17,83 @@
   font-size: 0.95rem;
 }
 
+.social-share {
+  position: relative;
+}
+
 .social-icons {
   display: flex;
   gap: 12px;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .icon-circle {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid var(--color-border);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-muted);
-  font-weight: bold;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  padding: 0;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .icon-circle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.icon-circle.whatsapp:hover {
+  background-color: #25d366;
+  border-color: #25d366;
+  color: #ffffff;
+}
+
+.icon-circle.twitter:hover {
+  background-color: #000000;
+  border-color: #000000;
+  color: #ffffff;
+}
+
+.icon-circle.facebook:hover {
+  background-color: #1877f2;
+  border-color: #1877f2;
+  color: #ffffff;
+}
+
+.icon-circle.copy:hover {
+  background-color: var(--color-primary);
   border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.copied-toast {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--color-primary-dark);
+  background-color: var(--color-primary-light);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  margin-top: -15px;
+  margin-bottom: 25px;
+  animation: fadeInToast 0.2s ease-in-out;
+}
+
+@keyframes fadeInToast {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .edicts-box {
