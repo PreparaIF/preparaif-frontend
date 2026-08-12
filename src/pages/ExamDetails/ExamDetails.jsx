@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchExamById } from "../../services/exams";
+import { useAuth } from "../../contexts/AuthContext";
 import { ButtonVoltar } from "../../components";
 import "./ExamDetails.css";
 
 function ExamDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, openAuthModal, recordAttempt } = useAuth();
 
   const [examData, setExamData] = useState(null);
   const [loadingExam, setLoadingExam] = useState(true);
@@ -56,7 +58,13 @@ function ExamDetails() {
 
   const currentQuestion = examData.questions[currentQuestionIndex];
 
-  const startExam = () => setScreenState("playing");
+  const startExam = () => {
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
+    setScreenState("playing");
+  };
 
   const handleOptionSelect = (index) => {
     setSelectedOption(index);
@@ -86,6 +94,17 @@ function ExamDetails() {
   const confirmFinish = () => {
     setIsModalOpen(false);
     setScreenState("finished");
+
+    const totalQuestions = examData.questions.length;
+    const correctCount = userAnswers.filter(
+      (answer, i) => answer === examData.questions[i].correctAnswerIndex
+    ).length;
+
+    recordAttempt({
+      examId: Number(id),
+      score: correctCount,
+      total: totalQuestions,
+    });
   };
 
   const restartExam = () => {

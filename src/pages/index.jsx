@@ -4,3 +4,6 @@ export { default as EditalDetails } from "./EditalDetails/EditalDetails";
 export { default as LastExams } from "./LastExams/LastExams";
 export { default as ExamDetails } from "./ExamDetails/ExamDetails";
 export { default as AdminPage } from "./Admin/AdminPage";
+export { default as ProfilePage } from "./Profile/ProfilePage";
+export { default as CoursesPage } from "./Courses/CoursesPage";
+export { default as EditaisPage } from "./Editais/EditaisPage";

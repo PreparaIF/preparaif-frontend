@@ -1,70 +1,141 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExams } from "../../services/exams";
-import { ButtonVoltar, LoadingSpinner } from "../../components";
+import { useAuth } from "../../contexts/AuthContext";
+import ButtonVoltar from "../../components/Utils/ButtonVoltar";
+import LoadingSpinner from "../../components/Utils/LoadingSpinner";
 import "./LastExams.css";
 
-function LastExams() {
+export default function LastExams() {
   const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("todas");
 
   useEffect(() => {
+    document.title = "Prepara IF - Provas Anteriores";
     fetchExams()
       .then(setExams)
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    document.title = "Prepara IF - Provas Anteriores";
-  }, []);
+  const [nivelFilter, setNivelFilter] = useState('');
+  const [anoFilter, setAnoFilter] = useState('');
+
+  // Regra dinamica da home: extrair parametros de anos existentes no dataset
+  const anos = useMemo(() => {
+    const extractedAnos = exams.map((e) => {
+      const match = (e.title || '').match(/\b(20\d{2})\b/);
+      return match ? match[1] : null;
+    }).filter(Boolean);
+    return [...new Set(extractedAnos)].sort().reverse();
+  }, [exams]);
+
+  const filteredExams = useMemo(() => {
+    return exams.filter((e) => {
+      const title = (e.title || '').toLowerCase();
+      const matchesNivel =
+        !nivelFilter ||
+        (nivelFilter === 'tecnico' && (title.includes('técnico') || title.includes('integrado') || title.includes('subsequente') || !title.includes('superior'))) ||
+        (nivelFilter === 'superior' && (title.includes('superior') || title.includes('bacharelado') || title.includes('licenciatura')));
+      
+      const matchesAno = !anoFilter || (e.title || '').includes(anoFilter);
+      return matchesNivel && matchesAno;
+    });
+  }, [exams, nivelFilter, anoFilter]);
+
+  const handleStartExam = (examId) => {
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
+    navigate(`/exame/${examId}`);
+  };
 
   return (
-    <div className="last-exams-page">
-      <header className="last-exams-header">
-        <ButtonVoltar />
-        <h1 className="last-exams-page-title">Provas Anteriores</h1>
-      </header>
+    <div className="section-page-container">
+      <div className="section-top-header">
+        <ButtonVoltar onClick={() => navigate("/")} />
+      </div>
 
-      {loading && <LoadingSpinner text="Carregando provas anteriores..." />}
+      <div className="section-page-hero">
+        <h1 className="section-page-title">Provas Anteriores</h1>
+        <p className="section-page-subtitle">
+          Pratique com exames das edições anteriores dos seletores do IFAL e acompanhe seu rendimento.
+        </p>
+      </div>
 
-      {!loading && exams.length === 0 && <p>Nenhuma prova encontrada.</p>}
+      {/* Cards & Filters */}
+      {loading ? (
+        <LoadingSpinner text="Carregando provas anteriores..." />
+      ) : (
+        <>
+          {/* Pill Filter Bar (Dinâmico) */}
+          <div className="pill-filters-row">
+            <select
+              className="pill-filter-select"
+              value={nivelFilter}
+              onChange={(e) => setNivelFilter(e.target.value)}
+            >
+              <option value="">Todos os níveis</option>
+              <option value="tecnico">🛠️ Ensino Técnico</option>
+              <option value="superior">🏛️ Ensino Superior</option>
+            </select>
 
-      {!loading && exams.length > 0 && (
-        <div className="exams-carousel-container">
-          {exams.map((exam) => (
-            <div className="last-exam-card" key={exam.id}>
-              <div className="exam-card-cover">
-                <div className="cover-text-overlay">
-                  <span className="cover-subtitle">Exame Anterior</span>
-                  <h3 className="cover-title">{exam.title}</h3>
-                </div>
+            <select
+              className="pill-filter-select"
+              value={anoFilter}
+              onChange={(e) => setAnoFilter(e.target.value)}
+            >
+              <option value="">Todos os anos</option>
+              {anos.map((ano) => (
+                <option key={ano} value={ano}>
+                  {ano}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="section-cards-grid">
+            {filteredExams.length === 0 ? (
+              <div className="section-empty-box">
+                <p>Nenhuma prova encontrada nesta categoria.</p>
               </div>
+            ) : (
+              filteredExams.map((exam) => (
+                <div className="last-exam-card" key={exam.id}>
+                  <div className="exam-card-cover">
+                    <div className="cover-text-overlay">
+                      <span className="cover-subtitle">Exame Anterior</span>
+                      <h3 className="cover-title">{exam.title}</h3>
+                    </div>
+                  </div>
 
-              <div className="exam-card-footer">
-                <div className="footer-info-group">
-                  <div className="info-block">
-                    <span className="info-value">
-                      {exam.questions.length} questões
-                    </span>
-                    <span className="info-label">Total</span>
+                  <div className="exam-card-footer">
+                    <div className="footer-info-group">
+                      <div className="info-block">
+                        <span className="info-value">
+                          {exam.questions ? exam.questions.length : 0} questões
+                        </span>
+                        <span className="info-label">Total</span>
+                      </div>
+                    </div>
+
+                    <button
+                      className="btn-fazer-prova"
+                      onClick={() => handleStartExam(exam.id)}
+                    >
+                      Fazer a prova
+                    </button>
                   </div>
                 </div>
-
-                <button
-                  className="btn-fazer-prova"
-                  onClick={() => navigate(`/exame/${exam.id}`)}
-                >
-                  Fazer a prova
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+              ))
+            )}
+          </div>
+        </>
       )}
     </div>
   );
 }
-
-export default LastExams;

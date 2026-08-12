@@ -1335,3 +1335,133 @@
     flex-direction: column;
   }
 }
+
+/* Question detailed fields & image preview */
+.q-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-remove-q {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-q:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+.btn-add-q {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--color-primary-light, #ecfdf5);
+  color: var(--color-primary-dark, #047857);
+  border: 1px solid var(--color-primary-border, #a7f3d0);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.btn-add-q:hover {
+  background: var(--admin-green, #059669);
+  color: #ffffff;
+}
+
+.q-img-preview-box {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+  display: inline-block;
+}
+
+.q-img-preview-box img {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 6px;
+  object-fit: contain;
+  display: block;
+}
+
+.btn-add-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-add-opt:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.btn-remove-opt {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  transition: color 0.15s ease;
+}
+
+.btn-remove-opt:hover {
+  color: #ef4444;
+}
+
+/* Relation Selectors */
+.relations-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.relation-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.relation-checkbox-item input[type="checkbox"] {
+  accent-color: var(--admin-green, #059669);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}

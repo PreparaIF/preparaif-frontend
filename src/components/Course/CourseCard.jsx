@@ -38,6 +38,7 @@ export default function CourseCard({ id, institute, course }) {
                     src={courseData.image || FALLBACK_IMAGE}
                     alt={courseData.name || "Curso"}
                     onError={(e) => {
+                        e.currentTarget.onerror = null;
                         e.currentTarget.src = FALLBACK_IMAGE;
                     }}
                 />
@@ -51,6 +52,7 @@ export default function CourseCard({ id, institute, course }) {
                         src={instData.logo || FALLBACK_LOGO}
                         alt={instData.name || "Instituto"}
                         onError={(e) => {
+                            e.currentTarget.onerror = null;
                             e.currentTarget.src = FALLBACK_LOGO;
                         }}
                     />
