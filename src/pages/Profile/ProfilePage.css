@@ -1,6 +1,6 @@
 .profile-page {
   min-height: 100vh;
-  background: var(--color-bg, #f4faf6);
+  background: transparent;
   padding: 24px 20px 80px;
   font-family: var(--font-body, 'Inter', sans-serif);
 }

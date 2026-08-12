@@ -114,7 +114,7 @@ export default function ProfilePage() {
             <div className="profile-badges-row">
               {isAdmin ? (
                 <span className="profile-status-tag admin">
-                  👑 Administrador do Sistema
+                  Administrador do Sistema
                 </span>
               ) : (
                 <span

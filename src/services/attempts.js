@@ -82,25 +82,12 @@ export function calculateUserEvolution(attempts = []) {
   };
 }
 
-export async function apiSaveAttempt(token, data, userId) {
-  try {
-    return await apiFetch("/attempts", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
-    });
-  } catch (err) {
-    const attempt = {
-      id: Date.now(),
-      examId: data.examId,
-      score: data.score,
-      total: data.total,
-      percentage: Math.round(((data.score || 0) / (data.total || 1)) * 100),
-      completedAt: new Date().toISOString(),
-    };
-    saveLocalAttempt(userId, attempt);
-    return attempt;
-  }
+export async function apiSaveAttempt(token, data) {
+  return await apiFetch("/attempts", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
 }
 
 export async function apiGetMyAttempts(token, userId) {

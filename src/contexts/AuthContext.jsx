@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { apiLogin, apiRegister, apiMe } from "../services/auth";
+import { apiLogin, apiRegister, apiMe, apiUpdateProfile } from "../services/auth";
 import { apiGetMyAttempts, apiSaveAttempt, calculateUserEvolution } from "../services/attempts";
 import AuthModal from "../components/AuthModal/AuthModal";
 import ToastNotification from "../components/Utils/ToastNotification";
@@ -63,8 +63,11 @@ export function AuthProvider({ children }) {
           const userData = await apiMe(token);
           setUser(userData);
         } catch (error) {
-          console.error("Sessão inválida", error);
-          logout();
+          console.warn("Sessão expirada ou token inválido, limpando sessão:", error.message);
+          localStorage.removeItem(STORAGE_KEY);
+          setToken(null);
+          setUser(null);
+          setUserAttempts([]);
         }
       }
       setLoading(false);
@@ -124,25 +127,23 @@ export function AuthProvider({ children }) {
   );
 
   const updateUserProfile = useCallback(async (updatedFields) => {
-    setUser((prev) => {
-      if (!prev) return prev;
-      const newUser = { ...prev, ...updatedFields };
-      try {
-        const sessions = JSON.parse(localStorage.getItem("preparaif_user_sessions")) || {};
-        if (token && sessions[token]) {
-          sessions[token] = newUser;
-          localStorage.setItem("preparaif_user_sessions", JSON.stringify(sessions));
-        }
-      } catch (e) {
-        console.error("Erro ao salvar perfil local:", e);
-      }
-      return newUser;
-    });
-    showToast({
-      type: "success",
-      title: "Perfil Atualizado",
-      message: "Suas alterações foram salvas com sucesso!",
-    });
+    try {
+      const updatedUser = await apiUpdateProfile(token, updatedFields);
+      setUser((prev) => ({ ...(prev || {}), ...updatedUser }));
+      showToast({
+        type: "success",
+        title: "Perfil Salvo no Banco",
+        message: "Suas informações pessoais e preferências foram salvas com sucesso!",
+      });
+      return updatedUser;
+    } catch (err) {
+      console.error("Erro ao salvar perfil:", err);
+      showToast({
+        type: "error",
+        title: "Erro ao Salvar",
+        message: "Não foi possível atualizar suas informações. Tente novamente.",
+      });
+    }
   }, [token, showToast]);
 
   const userEvolution = calculateUserEvolution(userAttempts);

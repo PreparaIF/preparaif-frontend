@@ -104,6 +104,7 @@ function ExamDetails() {
       examId: Number(id),
       score: correctCount,
       total: totalQuestions,
+      answers: userAnswers.map((a) => (a !== null && a !== undefined ? a : -1)),
     });
   };
 
@@ -218,6 +219,36 @@ function ExamDetails() {
     const wrongCount = totalQuestions - correctCount;
     const percentage = Math.round((correctCount / totalQuestions) * 100);
 
+    const getResultMessage = (pct) => {
+      if (pct >= 80) {
+        return {
+          title: "Excelente Desempenho! 🎉",
+          subtitle: "Você dominou o conteúdo desta prova. Parabéns!",
+          color: "#059669",
+          ringColor: "#10B981",
+          trackBg: "#D1FAE5"
+        };
+      }
+      if (pct >= 50) {
+        return {
+          title: "Bom Trabalho! 👍",
+          subtitle: "Você teve um bom rendimento! Revise as questões que errou para melhorar ainda mais.",
+          color: "#D97706",
+          ringColor: "#F59E0B",
+          trackBg: "#FDE68A"
+        };
+      }
+      return {
+        title: "Continue Praticando! 💪",
+        subtitle: "Não desanime! Cada tentativa é uma oportunidade de aprendizado. Revise o conteúdo e tente novamente.",
+        color: "#DC2626",
+        ringColor: "#EF4444",
+        trackBg: "#FCA5A5"
+      };
+    };
+
+    const feedback = getResultMessage(percentage);
+
     return (
       <div className="exam-page-container">
         <div className="exam-header">
@@ -228,17 +259,19 @@ function ExamDetails() {
           <div
             className="progress-wrapper"
             style={{
-              background: `conic-gradient(#3b9159 ${percentage}%, #9ec7a9 0)`,
+              background: `conic-gradient(${feedback.ringColor} ${percentage}%, ${feedback.trackBg} 0)`,
             }}
           >
             <div className="progress-inner">
-              <span className="percentage-text">{percentage}%</span>
+              <span className="percentage-text" style={{ color: feedback.color }}>
+                {percentage}%
+              </span>
             </div>
           </div>
 
           <div className="results-text-container">
-            <h2 className="results-title">Parabéns!</h2>
-            <p className="results-subtitle">Esse foi o seu resultado:</p>
+            <h2 className="results-title">{feedback.title}</h2>
+            <p className="results-subtitle">{feedback.subtitle}</p>
           </div>
 
           <div className="score-boxes">
