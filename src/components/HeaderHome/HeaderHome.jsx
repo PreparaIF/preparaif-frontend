@@ -5,7 +5,7 @@ import "./HeaderHome.css";
 
 export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
   const navigate = useNavigate();
-  const { isAdmin, logout } = useAuth();
+  const { user, userEvolution, openAuthModal, isAdmin, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -20,6 +20,8 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
+
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
 
   return (
     <div className="header-container">
@@ -79,13 +81,13 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
 
               <button
                 className={`nav-dropdown-item ${activeView === 'cursos' ? 'active' : ''}`}
-                onClick={() => { setMenuOpen(false); navigate("/?view=cursos"); }}
+                onClick={() => { setMenuOpen(false); navigate("/cursos"); }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                   <path d="M6 12v5c3 3 9 3 12 0v-5" />
                 </svg>
-                <span>Cursos</span>
+                <span>Todos os cursos</span>
               </button>
 
               <button
@@ -96,12 +98,12 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <path d="M9 9h6M9 13h6M9 17h4" />
                 </svg>
-                <span>Provas Anteriores</span>
+                <span>Todas as provas</span>
               </button>
 
               <button
                 className={`nav-dropdown-item ${activeView === 'editais' ? 'active' : ''}`}
-                onClick={() => { setMenuOpen(false); navigate("/?view=editais"); }}
+                onClick={() => { setMenuOpen(false); navigate("/editais"); }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -109,22 +111,57 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                   <line x1="16" y1="13" x2="8" y2="13" />
                   <line x1="16" y1="17" x2="8" y2="17" />
                 </svg>
-                <span>Editais</span>
+                <span>Todos os editais</span>
               </button>
 
               <div className="nav-dropdown-divider" />
 
-              {isAdmin ? (
+              {user ? (
                 <>
-                  <button
-                    className="nav-dropdown-item admin-item"
-                    onClick={() => { setMenuOpen(false); navigate("/admin"); }}
+                  <div
+                    className="user-dropdown-profile-item clickable"
+                    onClick={() => { setMenuOpen(false); navigate("/perfil"); }}
+                    title="Clique para ver e editar seu perfil"
+                    role="button"
+                    tabIndex={0}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                    <span>Painel Admin</span>
-                  </button>
+                    <div className="user-avatar-circle">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                      ) : (
+                        isAdmin ? '👑' : userInitial
+                      )}
+                    </div>
+                    <div className="user-profile-info">
+                      <span className="user-profile-name">{user.name || (isAdmin ? 'Administrador' : 'Estudante')}</span>
+                      {isAdmin ? (
+                        <span
+                          className="user-evolution-badge admin-badge"
+                          style={{
+                            color: "#065f46",
+                            background: "#ecfdf5",
+                            borderColor: "#a7f3d0",
+                          }}
+                        >
+                          Administrador
+                        </span>
+                      ) : (
+                        <span
+                          className="user-evolution-badge"
+                          style={{
+                            color: userEvolution.badgeColor,
+                            background: userEvolution.badgeBg,
+                            borderColor: userEvolution.badgeBorder,
+                          }}
+                        >
+                          {userEvolution.badge} {userEvolution.count > 0 ? `(${userEvolution.average}%)` : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="nav-dropdown-divider" />
+
                   <button
                     className="nav-dropdown-item logout-item"
                     onClick={() => { setMenuOpen(false); logout(); }}
@@ -139,15 +176,15 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                 </>
               ) : (
                 <button
-                  className="nav-dropdown-item admin-item"
-                  onClick={() => { setMenuOpen(false); navigate("/login"); }}
+                  className="nav-dropdown-item active"
+                  onClick={() => { setMenuOpen(false); openAuthModal('login'); }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
                     <polyline points="10 17 15 12 10 7" />
                     <line x1="15" y1="12" x2="3" y2="12" />
                   </svg>
-                  <span>Entrar como Admin</span>
+                  <span>Entrar / Cadastrar</span>
                 </button>
               )}
             </div>

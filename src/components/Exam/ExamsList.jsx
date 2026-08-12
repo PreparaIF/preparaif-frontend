@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExams } from "../../services/exams";
+import { useAuth } from "../../contexts/AuthContext";
 import LoadingSpinner from "../Utils/LoadingSpinner";
 import { matchExam } from "../../utils/searchUtils";
 import "./ExamsStyle.css";
 
 export default function ExamsList({ searchTerm = "" }) {
   const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +25,14 @@ export default function ExamsList({ searchTerm = "" }) {
   if (isSearching && filteredExams.length === 0) {
     return null;
   }
+
+  const handleStartExamClick = (examId) => {
+    if (!user) {
+      openAuthModal("login");
+      return;
+    }
+    navigate(`/exame/${examId}`);
+  };
 
   return (
     <section className="exams-section">
@@ -54,7 +64,7 @@ export default function ExamsList({ searchTerm = "" }) {
                 </span>
                 <button
                   className="btn-start-exam"
-                  onClick={() => navigate(`/exame/${exam.id}`)}
+                  onClick={() => handleStartExamClick(exam.id)}
                 >
                   Fazer a prova
                 </button>

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Home, CourseDetails, EditalDetails, LastExams, ExamDetails, AdminPage } from "./pages";
+import { Home, CourseDetails, EditalDetails, LastExams, ExamDetails, AdminPage, ProfilePage, CoursesPage, EditaisPage } from "./pages";
 import LoginPage from "./pages/Login/LoginPage";
 import RegisterPage from "./pages/Register/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -13,6 +13,8 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/cursos" element={<CoursesPage />} />
+            <Route path="/editais" element={<EditaisPage />} />
             <Route path="/curso/:id" element={<CourseDetails />} />
             <Route path="/edital/:id" element={<EditalDetails />} />
             <Route path="/provas" element={<LastExams />} />
@@ -20,9 +22,17 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro" element={<RegisterPage />} />
             <Route
-              path="/admin"
+              path="/perfil"
               element={
                 <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly>
                   <AdminPage />
                 </ProtectedRoute>
               }

@@ -216,22 +216,64 @@ export default function AdminPage() {
     }
   };
 
+  const [editingId, setEditingId] = useState(null);
+
   const handleSaveToDb = async () => {
     if (!result) return;
     setSavingDb(true);
     setMessage({ type: '', text: '' });
     try {
-      const metadata = {
-        ano: formData.ano,
-        exame_num: formData.exame_num,
-        texto: inputMode === 'text' ? formData.texto : '',
-        titulo_personalizado: formData.titulo_personalizado,
-        instituteName: formData.instituteName,
-        salvar_banco: true,
-        file_gabarito: inputMode === 'pdf' ? fileGabarito : null,
-      };
+      if (activeTab === 'prova' && result.questoes) {
+        const examPayload = {
+          id: isEditingExisting ? editingId : undefined,
+          title: formData.titulo_personalizado || result.title || `Prova ${formData.ano || ''} Exame ${formData.exame_num || ''}`.trim(),
+          questions: result.questoes.map((q, idx) => ({
+            id: q.id || idx + 1,
+            texto_apoio: q.texto_apoio || q.text_apoio || '',
+            imagem_url: q.imagem_url || q.image || '',
+            creditos: q.creditos || q.source || '',
+            text: q.text || '',
+            options: q.options || [],
+            correctAnswerIndex: q.correctAnswerIndex ?? 0,
+          })),
+        };
+        await saveExam(examPayload, isEditingExisting, editingId);
+      } else if (activeTab === 'edital' && result.edital) {
+        const editalPayload = {
+          id: isEditingExisting ? editingId : undefined,
+          title: result.edital.title || formData.titulo_personalizado || 'Edital sem título',
+          description: result.edital.description || '',
+          content: result.edital.content || '',
+          time: result.edital.time || 'Avisos e Editais',
+          courses: result.edital.courses || [],
+        };
+        await saveEdital(editalPayload, isEditingExisting, editingId);
+      } else if (activeTab === 'curso' && result.course) {
+        const coursePayload = {
+          id: isEditingExisting ? editingId : undefined,
+          title: result.course.title || formData.titulo_personalizado || 'Curso sem nome',
+          description: result.course.description || '',
+          campus: result.course.campus || '',
+          shift: result.course.shift || '',
+          modality: result.course.modality || '',
+          duration: result.course.duration || '',
+          degree: result.course.degree || '',
+          instituteName: formData.instituteName || 'IFAL',
+          editals: result.course.editals || [],
+        };
+        await saveCourse(coursePayload, isEditingExisting, editingId);
+      } else {
+        const metadata = {
+          ano: formData.ano,
+          exame_num: formData.exame_num,
+          texto: inputMode === 'text' ? formData.texto : '',
+          titulo_personalizado: formData.titulo_personalizado,
+          instituteName: formData.instituteName,
+          salvar_banco: true,
+        };
+        await uploadDocumento(activeTab, inputMode === 'pdf' ? file : null, metadata);
+      }
 
-      const res = await uploadDocumento(activeTab, inputMode === 'pdf' ? file : null, metadata);
       const [courses, editais, exams] = await Promise.all([
         fetchCourses(true),
         fetchEditais(true),
@@ -242,7 +284,7 @@ export default function AdminPage() {
       setDbExams(exams || []);
       setMessage({
         type: 'success',
-        text: `✅ Dados salvos com sucesso no Banco de Dados! ${res.registro_criado ? `(ID: ${res.registro_criado.id})` : ''}`,
+        text: `✅ ${isEditingExisting ? 'Registro atualizado' : 'Registro salvo'} com sucesso no Banco de Dados!`,
       });
     } catch (err) {
       console.error("Erro ao salvar no banco:", err);
@@ -252,13 +294,17 @@ export default function AdminPage() {
     }
   };
 
-  const updateQuestionText = (index, newText) => {
-    setResult(prev => {
+  const updateQuestionField = (qIdx, field, value) => {
+    setResult((prev) => {
       if (!prev || !prev.questoes) return prev;
       const newQuestoes = [...prev.questoes];
-      newQuestoes[index] = { ...newQuestoes[index], text: newText };
+      newQuestoes[qIdx] = { ...newQuestoes[qIdx], [field]: value };
       return { ...prev, questoes: newQuestoes };
     });
+  };
+
+  const updateQuestionText = (index, newText) => {
+    updateQuestionField(index, 'text', newText);
   };
 
   const updateQuestionOption = (qIdx, oIdx, newOptText) => {
@@ -272,11 +318,63 @@ export default function AdminPage() {
     });
   };
 
+  const addQuestionOption = (qIdx) => {
+    setResult((prev) => {
+      if (!prev || !prev.questoes) return prev;
+      const newQuestoes = [...prev.questoes];
+      const currentOpts = newQuestoes[qIdx].options || [];
+      const newLetter = String.fromCharCode(65 + currentOpts.length);
+      newQuestoes[qIdx] = {
+        ...newQuestoes[qIdx],
+        options: [...currentOpts, `Alternativa ${newLetter}`],
+      };
+      return { ...prev, questoes: newQuestoes };
+    });
+  };
+
+  const removeQuestionOption = (qIdx, oIdx) => {
+    setResult((prev) => {
+      if (!prev || !prev.questoes) return prev;
+      const newQuestoes = [...prev.questoes];
+      const currentOpts = newQuestoes[qIdx].options || [];
+      if (currentOpts.length <= 2) return prev;
+      const newOptions = currentOpts.filter((_, idx) => idx !== oIdx);
+      let newCorrect = newQuestoes[qIdx].correctAnswerIndex ?? 0;
+      if (newCorrect >= newOptions.length) newCorrect = newOptions.length - 1;
+      newQuestoes[qIdx] = { ...newQuestoes[qIdx], options: newOptions, correctAnswerIndex: newCorrect };
+      return { ...prev, questoes: newQuestoes };
+    });
+  };
+
   const updateQuestionGabarito = (qIdx, newGabaritoIndex) => {
     setResult(prev => {
       if (!prev || !prev.questoes) return prev;
       const newQuestoes = [...prev.questoes];
       newQuestoes[qIdx] = { ...newQuestoes[qIdx], correctAnswerIndex: newGabaritoIndex };
+      return { ...prev, questoes: newQuestoes };
+    });
+  };
+
+  const addQuestion = () => {
+    setResult((prev) => {
+      const currentQ = prev?.questoes || [];
+      const newQ = {
+        id: currentQ.length + 1,
+        texto_apoio: '',
+        imagem_url: '',
+        creditos: '',
+        text: '',
+        options: ['Opção A', 'Opção B', 'Opção C', 'Opção D'],
+        correctAnswerIndex: 0,
+      };
+      return { ...prev, questoes: [...currentQ, newQ] };
+    });
+  };
+
+  const removeQuestion = (qIdx) => {
+    setResult((prev) => {
+      if (!prev || !prev.questoes) return prev;
+      const newQuestoes = prev.questoes.filter((_, idx) => idx !== qIdx);
       return { ...prev, questoes: newQuestoes };
     });
   };
@@ -288,6 +386,18 @@ export default function AdminPage() {
     });
   };
 
+  const toggleEditalCourse = (courseId) => {
+    setResult((prev) => {
+      if (!prev || !prev.edital) return prev;
+      const currentCourses = prev.edital.courses || [];
+      const exists = currentCourses.includes(courseId);
+      const updated = exists
+        ? currentCourses.filter((id) => id !== courseId)
+        : [...currentCourses, courseId];
+      return { ...prev, edital: { ...prev.edital, courses: updated } };
+    });
+  };
+
   const updateCourseField = (field, value) => {
     setResult(prev => {
       if (!prev || !prev.course) return prev;
@@ -295,9 +405,22 @@ export default function AdminPage() {
     });
   };
 
+  const toggleCourseEdital = (editalId) => {
+    setResult((prev) => {
+      if (!prev || !prev.course) return prev;
+      const currentEditals = prev.course.editals || [];
+      const exists = currentEditals.includes(editalId);
+      const updated = exists
+        ? currentEditals.filter((id) => id !== editalId)
+        : [...currentEditals, editalId];
+      return { ...prev, course: { ...prev.course, editals: updated } };
+    });
+  };
+
   const handleEditExam = (item) => {
     setActiveTab('prova');
     setIsEditingExisting(true);
+    setEditingId(item.id);
     setFormData({
       ano: item.title.match(/\d{4}/)?.[0] || '',
       exame_num: item.title.match(/exame\s*(\d+)/i)?.[1] || '01',
@@ -305,13 +428,14 @@ export default function AdminPage() {
       titulo_personalizado: item.title,
       instituteName: 'IFAL',
     });
-    setResult({ questoes: item.questions || [] });
-    setMessage({ type: 'success', text: `Prova "${item.title}" carregada do banco. Edite os campos abaixo e clique em "Salvar Alterações no Banco".` });
+    setResult({ id: item.id, title: item.title, questoes: item.questions || [] });
+    setMessage({ type: 'success', text: `Prova "${item.title}" carregada do banco.` });
   };
 
   const handleEditEdital = (item) => {
     setActiveTab('edital');
     setIsEditingExisting(true);
+    setEditingId(item.id);
     setFormData({
       ano: '',
       exame_num: '',
@@ -319,13 +443,14 @@ export default function AdminPage() {
       titulo_personalizado: item.title,
       instituteName: 'IFAL',
     });
-    setResult({ edital: item });
-    setMessage({ type: 'success', text: `Edital "${item.title}" carregado do banco. Edite os campos abaixo e clique em "Salvar Alterações no Banco".` });
+    setResult({ edital: { ...item } });
+    setMessage({ type: 'success', text: `Edital "${item.title}" carregado do banco.` });
   };
 
   const handleEditCourse = (item) => {
     setActiveTab('curso');
     setIsEditingExisting(true);
+    setEditingId(item.id);
     setFormData({
       ano: '',
       exame_num: '',
@@ -335,15 +460,18 @@ export default function AdminPage() {
     });
     setResult({
       course: {
+        id: item.id,
         title: item.course.name,
         description: item.course.description,
         campus: item.course.campus,
         shift: item.course.turno,
         modality: item.course.specs?.modalidade || 'Presencial',
         duration: item.course.specs?.duracao || '4 anos',
+        degree: item.course.specs?.titulo || 'Técnico / Bacharel',
+        editals: item.course.editals || item.course.edicts || [],
       }
     });
-    setMessage({ type: 'success', text: `Curso "${item.course.name}" carregado do banco. Edite os campos abaixo e clique em "Salvar Alterações no Banco".` });
+    setMessage({ type: 'success', text: `Curso "${item.course.name}" carregado do banco.` });
   };
 
   const activeTabInfo = TABS.find(t => t.id === activeTab) || {
@@ -403,10 +531,10 @@ export default function AdminPage() {
         <ButtonVoltar />
       </div>
       <div className="admin-hero">
-        <span className="admin-badge">Painel Administrativo</span>
-        <h1 className="admin-title">Processamento de Documentos</h1>
+        <span className="admin-badge">Painel de Extração</span>
+        <h1 className="admin-title">Processamento e Extração de Documentos</h1>
         <p className="admin-subtitle">
-          Envie PDFs ou textos para extração com IA, ou gerencie registros existentes do banco de dados.
+          Envie PDFs ou textos para extração automatizada, ou gerencie registros existentes do banco de dados.
         </p>
       </div>
 
@@ -894,12 +1022,23 @@ export default function AdminPage() {
 
               {result.questoes && (
                 <div className="questions-list">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <span className="edit-label">Questões Extraídas / Cadastradas:</span>
+                    <button
+                      type="button"
+                      className="btn-add-q"
+                      onClick={addQuestion}
+                    >
+                      ➕ Adicionar Nova Questão
+                    </button>
+                  </div>
+
                   {result.questoes.map((q, idx) => (
                     <div key={idx} className="question-item edit-mode-q">
-                      <div className="question-item-header">
+                      <div className="question-item-header q-header-top">
                         <span className="q-number">Questão {idx + 1}</span>
                         <div className="q-gabarito-select-wrapper">
-                          <label className="gabarito-label">Gabarito:</label>
+                          <label className="gabarito-label">Gabarito Correto:</label>
                           <select
                             className="gabarito-select-input"
                             value={q.correctAnswerIndex ?? 0}
@@ -907,27 +1046,84 @@ export default function AdminPage() {
                           >
                             {(q.options || ['Opção A', 'Opção B', 'Opção C', 'Opção D']).map((_, oIdx) => (
                               <option key={oIdx} value={oIdx}>
-                                Opção {String.fromCharCode(65 + oIdx)}
+                                Alternativa {String.fromCharCode(65 + oIdx)}
                               </option>
                             ))}
                           </select>
+                          <button
+                            type="button"
+                            className="btn-remove-q"
+                            onClick={() => removeQuestion(idx)}
+                            title="Remover esta questão"
+                          >
+                            🗑️ Remover
+                          </button>
                         </div>
                       </div>
 
                       <div className="edit-q-block">
-                        <label className="edit-label">Enunciado da Questão:</label>
+                        <label className="edit-label">Texto de Apoio / Contexto (opcional):</label>
+                        <textarea
+                          className="edit-q-textarea"
+                          value={q.texto_apoio || q.text_apoio || ''}
+                          onChange={e => updateQuestionField(idx, 'texto_apoio', e.target.value)}
+                          rows={2}
+                          placeholder="Texto de leitura, contextualização ou instrução inicial..."
+                        />
+                      </div>
+
+                      <div className="form-row" style={{ marginTop: '10px' }}>
+                        <div className="edit-q-block" style={{ margin: 0 }}>
+                          <label className="edit-label">URL / Caminho da Imagem (opcional):</label>
+                          <input
+                            type="text"
+                            className="edit-option-input"
+                            value={q.imagem_url || q.image || ''}
+                            onChange={e => updateQuestionField(idx, 'imagem_url', e.target.value)}
+                            placeholder="https://exemplo.com/imagem-questao.png"
+                          />
+                          {(q.imagem_url || q.image) && (
+                            <div className="q-img-preview-box">
+                              <img src={q.imagem_url || q.image} alt={`Visualização Q${idx + 1}`} onError={(e) => { e.target.style.display = 'none'; }} />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="edit-q-block" style={{ margin: 0 }}>
+                          <label className="edit-label">Créditos / Fonte da Figura ou Texto (opcional):</label>
+                          <input
+                            type="text"
+                            className="edit-option-input"
+                            value={q.creditos || q.source || ''}
+                            onChange={e => updateQuestionField(idx, 'creditos', e.target.value)}
+                            placeholder="Ex: Adaptado de IFAL 2024 / Fonte: IBGE"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="edit-q-block" style={{ marginTop: '12px' }}>
+                        <label className="edit-label">Enunciado da Questão *:</label>
                         <textarea
                           className="edit-q-textarea"
                           value={q.text || ''}
                           onChange={e => updateQuestionText(idx, e.target.value)}
                           rows={3}
-                          placeholder="Enunciado da questão..."
+                          placeholder="Digite aqui a pergunta principal da questão..."
                         />
                       </div>
 
                       {q.options && (
                         <div className="edit-options-list">
-                          <label className="edit-label">Alternativas de Resposta:</label>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label className="edit-label">Alternativas de Resposta:</label>
+                            <button
+                              type="button"
+                              className="btn-add-opt"
+                              onClick={() => addQuestionOption(idx)}
+                            >
+                              ➕ Alternativa
+                            </button>
+                          </div>
                           {q.options.map((opt, oIdx) => (
                             <div
                               key={oIdx}
@@ -946,6 +1142,16 @@ export default function AdminPage() {
                               {oIdx === q.correctAnswerIndex && (
                                 <span className="correct-tag">✓ Correta</span>
                               )}
+                              {q.options.length > 2 && (
+                                <button
+                                  type="button"
+                                  className="btn-remove-opt"
+                                  onClick={() => removeQuestionOption(idx, oIdx)}
+                                  title="Remover esta alternativa"
+                                >
+                                  ✖
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -958,31 +1164,56 @@ export default function AdminPage() {
               {result.edital && (
                 <div className="extracted-edital edit-mode-edital">
                   <div className="edit-q-block">
-                    <label className="edit-label">Título do Edital:</label>
+                    <label className="edit-label">Título do Edital *:</label>
                     <input
                       type="text"
                       className="edit-option-input"
                       value={result.edital.title || ''}
                       onChange={e => updateEditalField('title', e.target.value)}
+                      placeholder="Ex: Edital nº 01/2025 - Processo Seletivo IFAL"
                     />
                   </div>
                   <div className="edit-q-block" style={{ marginTop: '12px' }}>
-                    <label className="edit-label">Descrição Resumida:</label>
+                    <label className="edit-label">Informações / Descrição Resumida *:</label>
                     <textarea
                       className="edit-q-textarea"
                       value={result.edital.description || ''}
                       onChange={e => updateEditalField('description', e.target.value)}
                       rows={3}
+                      placeholder="Resumo das informações do edital..."
                     />
                   </div>
                   <div className="edit-q-block" style={{ marginTop: '12px' }}>
-                    <label className="edit-label">Conteúdo do Edital (HTML / Texto):</label>
+                    <label className="edit-label">Conteúdo Completo do Edital (HTML / Texto):</label>
                     <textarea
                       className="edit-q-textarea"
                       value={result.edital.content || ''}
                       onChange={e => updateEditalField('content', e.target.value)}
                       rows={8}
+                      placeholder="Conteúdo detalhado ou regras do edital..."
                     />
+                  </div>
+                  <div className="edit-q-block" style={{ marginTop: '16px' }}>
+                    <label className="edit-label">Cursos Relacionados:</label>
+                    <div className="relations-checklist">
+                      {dbCourses.length === 0 ? (
+                        <p className="empty-category-text">Nenhum curso disponível para vincular.</p>
+                      ) : (
+                        dbCourses.map((c) => {
+                          const isChecked = (result.edital.courses || []).includes(c.id);
+                          return (
+                            <label key={c.id} className="relation-checkbox-item">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleEditalCourse(c.id)}
+                              />
+                              <span>{c.course.name} ({c.course.campus})</span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -990,59 +1221,98 @@ export default function AdminPage() {
               {result.course && (
                 <div className="extracted-course edit-mode-course">
                   <div className="edit-q-block">
-                    <label className="edit-label">Nome do Curso:</label>
+                    <label className="edit-label">Nome do Curso *:</label>
                     <input
                       type="text"
                       className="edit-option-input"
                       value={result.course.title || ''}
                       onChange={e => updateCourseField('title', e.target.value)}
+                      placeholder="Ex: Técnico em Informática"
                     />
                   </div>
                   <div className="edit-q-block" style={{ marginTop: '12px' }}>
-                    <label className="edit-label">Descrição do Curso:</label>
+                    <label className="edit-label">Informações Importantes / Descrição *:</label>
                     <textarea
                       className="edit-q-textarea"
                       value={result.course.description || ''}
                       onChange={e => updateCourseField('description', e.target.value)}
                       rows={3}
+                      placeholder="Detalhes e objetivos sobre o curso..."
                     />
                   </div>
-                  <div className="course-specs-grid" style={{ marginTop: '16px' }}>
+                  <div className="course-specs-grid" style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
                     <div>
-                      <label className="edit-label">Campus:</label>
+                      <label className="edit-label">Campus *:</label>
                       <input
                         type="text"
                         className="edit-option-input"
                         value={result.course.campus || ''}
                         onChange={e => updateCourseField('campus', e.target.value)}
+                        placeholder="Ex: Maceió"
                       />
                     </div>
                     <div>
-                      <label className="edit-label">Turno:</label>
+                      <label className="edit-label">Turno *:</label>
                       <input
                         type="text"
                         className="edit-option-input"
                         value={result.course.shift || ''}
                         onChange={e => updateCourseField('shift', e.target.value)}
+                        placeholder="Ex: Matutino / Integral"
                       />
                     </div>
                     <div>
-                      <label className="edit-label">Modalidade:</label>
+                      <label className="edit-label">Modalidade *:</label>
                       <input
                         type="text"
                         className="edit-option-input"
                         value={result.course.modality || ''}
                         onChange={e => updateCourseField('modality', e.target.value)}
+                        placeholder="Ex: Presencial"
                       />
                     </div>
                     <div>
-                      <label className="edit-label">Duração:</label>
+                      <label className="edit-label">Duração *:</label>
                       <input
                         type="text"
                         className="edit-option-input"
                         value={result.course.duration || ''}
                         onChange={e => updateCourseField('duration', e.target.value)}
+                        placeholder="Ex: 3 anos"
                       />
+                    </div>
+                    <div>
+                      <label className="edit-label">Título Concedido *:</label>
+                      <input
+                        type="text"
+                        className="edit-option-input"
+                        value={result.course.degree || ''}
+                        onChange={e => updateCourseField('degree', e.target.value)}
+                        placeholder="Ex: Técnico de Nível Médio"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="edit-q-block" style={{ marginTop: '16px' }}>
+                    <label className="edit-label">Editais Relacionados:</label>
+                    <div className="relations-checklist">
+                      {dbEditais.length === 0 ? (
+                        <p className="empty-category-text">Nenhum edital disponível para vincular.</p>
+                      ) : (
+                        dbEditais.map((ed) => {
+                          const isChecked = (result.course.editals || []).includes(ed.id);
+                          return (
+                            <label key={ed.id} className="relation-checkbox-item">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleCourseEdital(ed.id)}
+                              />
+                              <span>{ed.title}</span>
+                            </label>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 </div>

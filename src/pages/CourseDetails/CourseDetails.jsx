@@ -1,19 +1,65 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "./CourseDetails.css";
 import { HeaderCourse } from "../../components";
 import { fetchCourseById } from "../../services/courses";
+import { fetchEditais } from "../../services/edital";
 
 function CourseDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [cursoAtual, setCursoAtual] = useState(null);
+  const [relatedEditais, setRelatedEditais] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetchCourseById(id)
-      .then(setCursoAtual)
+    Promise.all([fetchCourseById(id), fetchEditais()])
+      .then(([courseData, allEditais]) => {
+        setCursoAtual(courseData);
+
+        const courseEdicts =
+          courseData?.course?.editals || courseData?.course?.edicts || [];
+        let matched = [];
+
+        if (Array.isArray(courseEdicts) && courseEdicts.length > 0) {
+          matched = courseEdicts.map((e) => {
+            if (typeof e === "object" && e !== null) return e;
+            const found = (allEditais || []).find(
+              (ed) => String(ed.id) === String(e) || ed.title === String(e)
+            );
+            return found || { id: e, title: String(e) };
+          });
+        }
+
+        if (
+          matched.length === 0 &&
+          Array.isArray(allEditais) &&
+          allEditais.length > 0
+        ) {
+          const courseName = (courseData?.course?.name || "").toLowerCase();
+          const courseCampus = (courseData?.course?.campus || "").toLowerCase();
+
+          const filtered = allEditais.filter((ed) => {
+            const edTitle = (ed.title || "").toLowerCase();
+            const edDesc = (ed.description || "").toLowerCase();
+            const edContent = (ed.content || "").toLowerCase();
+            return (
+              (courseName &&
+                (edTitle.includes(courseName) ||
+                  edDesc.includes(courseName) ||
+                  edContent.includes(courseName))) ||
+              (courseCampus &&
+                (edTitle.includes(courseCampus) || edDesc.includes(courseCampus)))
+            );
+          });
+
+          matched = filtered.length > 0 ? filtered : [allEditais[0]];
+        }
+
+        setRelatedEditais(matched);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [id]);
@@ -137,10 +183,47 @@ function CourseDetails() {
           </div>
 
           <div className="edicts-box">
-            <h3 className="edicts-box-title">Editais Anteriores</h3>
+            <h3 className="edicts-box-title">Editais Relacionados</h3>
             <ul className="edicts-list">
-              {(cursoAtual.course.editals || []).map((edict, index) => (
-                <li key={index}>{edict.title}</li>
+              {relatedEditais.map((edict, index) => (
+                <li
+                  key={edict.id || index}
+                  className="edict-item"
+                  onClick={() => edict.id && navigate(`/edital/${edict.id}`)}
+                  title={`Ver edital: ${edict.title}`}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="edict-icon"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                  <span className="edict-title-text">{edict.title}</span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="edict-arrow"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </li>
               ))}
             </ul>
           </div>

@@ -19,6 +19,26 @@ export async function apiFetch(path, options = {}) {
 
 export const apiGet = apiFetch;
 
+export async function apiPost(path, data) {
+  return apiFetch(path, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiPut(path, data) {
+  return apiFetch(path, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiDelete(path) {
+  return apiFetch(path, {
+    method: "DELETE",
+  });
+}
+
 export async function apiUpload(path, formData) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "POST",
