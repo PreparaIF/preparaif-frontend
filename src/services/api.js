@@ -6,6 +6,12 @@ export async function apiFetch(path, options = {}) {
 
   const defaultHeaders = {};
 
+  if (!API_URL) {
+    throw new Error(
+      "VITE_API_URL não está configurada."
+    );
+  } 
+
   if (token) {
     defaultHeaders["Authorization"] = `Bearer ${token}`;
   }

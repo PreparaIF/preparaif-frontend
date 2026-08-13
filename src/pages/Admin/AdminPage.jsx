@@ -235,10 +235,11 @@ export default function AdminPage() {
             supportText: q.supportText || q.texto_apoio || q.texto_de_apoio || '',
             imageUrl: q.imageUrl || q.imagem_url || q.image || '',
             credits: q.credits || q.creditos || q.source || '',
-            text: q.text || q.statement || q.enunciado || '',
             options: q.options || q.opcoes || [],
-            correctAnswerIndex: q.correctAnswerIndex ?? q.gabarito ?? null,
-            status: q.status || (q.correctAnswerIndex !== null ? 'VALID' : 'UNKNOWN'),
+            correctAnswerIndex: (q.correctAnswerIndex !== undefined && q.correctAnswerIndex !== null) ? q.correctAnswerIndex : (q.gabarito !== undefined ? q.gabarito : null),
+            status: q.status || ((q.correctAnswerIndex !== null && q.correctAnswerIndex !== undefined) ? 'VALID' : 'UNKNOWN'),
+            answerKey: q.answerKey || null,
+            answerKeyStatus: q.answerKeyStatus || (q.status === 'ANNULLED' ? 'ANNULLED' : (q.correctAnswerIndex !== null ? 'ORIGINAL' : 'UNKNOWN')),
           })),
         };
         await saveExam(examPayload, isEditingExisting, editingId);
@@ -343,18 +344,50 @@ export default function AdminPage() {
       const currentOpts = newQuestoes[qIdx].options || [];
       if (currentOpts.length <= 2) return prev;
       const newOptions = currentOpts.filter((_, idx) => idx !== oIdx);
-      let newCorrect = newQuestoes[qIdx].correctAnswerIndex ?? 0;
-      if (newCorrect >= newOptions.length) newCorrect = newOptions.length - 1;
+
+      let currentCorrect = newQuestoes[qIdx].correctAnswerIndex;
+      let newCorrect = currentCorrect;
+
+      if (Number.isInteger(currentCorrect)) {
+        if (oIdx === currentCorrect) {
+          newCorrect = null;
+        } else if (oIdx < currentCorrect) {
+          newCorrect = currentCorrect - 1;
+        }
+        if (newCorrect !== null && newCorrect >= newOptions.length) {
+          newCorrect = newOptions.length - 1;
+        }
+      } else {
+        newCorrect = null;
+      }
+
       newQuestoes[qIdx] = { ...newQuestoes[qIdx], options: newOptions, correctAnswerIndex: newCorrect };
       return { ...prev, questoes: newQuestoes };
     });
   };
 
-  const updateQuestionGabarito = (qIdx, newGabaritoIndex) => {
+  const updateQuestionGabarito = (qIdx, newGabaritoIndex, newStatus) => {
     setResult(prev => {
       if (!prev || !prev.questoes) return prev;
       const newQuestoes = [...prev.questoes];
-      newQuestoes[qIdx] = { ...newQuestoes[qIdx], correctAnswerIndex: newGabaritoIndex };
+      const charArray = ['A', 'B', 'C', 'D', 'E'];
+
+      let status = newStatus;
+      if (!status) {
+        if (newGabaritoIndex === null || newGabaritoIndex === undefined) {
+          status = 'UNKNOWN';
+        } else {
+          status = 'VALID';
+        }
+      }
+
+      newQuestoes[qIdx] = {
+        ...newQuestoes[qIdx],
+        correctAnswerIndex: newGabaritoIndex,
+        answerKey: newGabaritoIndex !== null ? (charArray[newGabaritoIndex] || null) : null,
+        status: status,
+        answerKeyStatus: status === 'ANNULLED' ? 'ANNULLED' : (status === 'UNKNOWN' ? 'UNKNOWN' : 'ORIGINAL')
+      };
       return { ...prev, questoes: newQuestoes };
     });
   };
@@ -369,7 +402,9 @@ export default function AdminPage() {
         creditos: '',
         text: '',
         options: ['Opção A', 'Opção B', 'Opção C', 'Opção D'],
-        correctAnswerIndex: 0,
+        correctAnswerIndex: null,
+        status: 'UNKNOWN',
+        answerKeyStatus: 'UNKNOWN',
       };
       return { ...prev, questoes: [...currentQ, newQ] };
     });
@@ -1057,8 +1092,27 @@ export default function AdminPage() {
                       </div>
 
                       {result.questoes.map((q, idx) => {
-                        const correctOptIndex = q.correctAnswerIndex ?? q.gabarito ?? 0;
-                        const correctLetter = q.gabarito_letra || String.fromCharCode(65 + correctOptIndex);
+                        const isAnnulled = q.status === 'ANNULLED' || q.answerKeyStatus === 'ANNULLED';
+                        const isUnknown = !isAnnulled && (q.correctAnswerIndex === null || q.correctAnswerIndex === undefined || q.status === 'UNKNOWN');
+                        const isChanged = q.answerKeyStatus === 'CHANGED';
+
+                        const correctOptIndex = (q.correctAnswerIndex !== undefined && q.correctAnswerIndex !== null) ? q.correctAnswerIndex : null;
+
+                        let gabaritoBadgeText = '';
+                        let gabaritoBadgeClass = 'preview-gabarito-tag';
+
+                        if (isAnnulled) {
+                          gabaritoBadgeText = '⚠ Questão anulada';
+                          gabaritoBadgeClass = 'preview-gabarito-tag is-annulled';
+                        } else if (isUnknown) {
+                          gabaritoBadgeText = '⚠ Gabarito não identificado';
+                          gabaritoBadgeClass = 'preview-gabarito-tag is-unknown';
+                        } else {
+                          const optChar = q.answerKey || (Number.isInteger(correctOptIndex) ? String.fromCharCode(65 + correctOptIndex) : (q.gabarito_letra || '?'));
+                          gabaritoBadgeText = `✓ Gabarito: Alternativa ${optChar}${isChanged ? ' (Alterado após recurso)' : ''}`;
+                          gabaritoBadgeClass = 'preview-gabarito-tag is-valid';
+                        }
+
                         const opts = (q.options && q.options.length > 0)
                           ? q.options
                           : (q.opcoes && q.opcoes.length > 0)
@@ -1070,8 +1124,8 @@ export default function AdminPage() {
                           <div key={idx} className="preview-question-card">
                             <div className="preview-q-header">
                               <span className="preview-q-number">Questão {q.numero || idx + 1}</span>
-                              <span className="preview-gabarito-tag">
-                                ✓ Gabarito: Alternativa {correctLetter}
+                              <span className={gabaritoBadgeClass}>
+                                {gabaritoBadgeText}
                               </span>
                             </div>
 
@@ -1104,7 +1158,7 @@ export default function AdminPage() {
 
                             <div className="preview-options-list">
                               {opts.map((opt, oIdx) => {
-                                const isCorrect = oIdx === correctOptIndex;
+                                const isCorrect = !isAnnulled && !isUnknown && oIdx === correctOptIndex;
                                 const letter = String.fromCharCode(65 + oIdx);
                                 return (
                                   <div key={oIdx} className={`preview-option-item ${isCorrect ? 'correct' : ''}`}>
@@ -1173,9 +1227,26 @@ export default function AdminPage() {
                               <label className="gabarito-label">Gabarito Correto:</label>
                               <select
                                 className="gabarito-select-input"
-                                value={q.correctAnswerIndex ?? 0}
-                                onChange={e => updateQuestionGabarito(idx, Number(e.target.value))}
+                                value={
+                                  q.status === 'ANNULLED' || q.answerKeyStatus === 'ANNULLED'
+                                    ? 'ANNULLED'
+                                    : (q.correctAnswerIndex !== null && q.correctAnswerIndex !== undefined
+                                        ? String(q.correctAnswerIndex)
+                                        : '')
+                                }
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (val === 'ANNULLED') {
+                                    updateQuestionGabarito(idx, null, 'ANNULLED');
+                                  } else if (val === '') {
+                                    updateQuestionGabarito(idx, null, 'UNKNOWN');
+                                  } else {
+                                    updateQuestionGabarito(idx, Number(val), 'VALID');
+                                  }
+                                }}
                               >
+                                <option value="">Sem gabarito (UNKNOWN)</option>
+                                <option value="ANNULLED">Questão anulada (ANNULLED)</option>
                                 {(q.options || ['Opção A', 'Opção B', 'Opção C', 'Opção D']).map((_, oIdx) => (
                                   <option key={oIdx} value={oIdx}>
                                     Alternativa {String.fromCharCode(65 + oIdx)}
