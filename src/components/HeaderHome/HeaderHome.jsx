@@ -68,58 +68,6 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
 
           {menuOpen && (
             <div className="nav-dropdown">
-              <button
-                className={`nav-dropdown-item ${!activeView ? 'active' : ''}`}
-                onClick={() => { setMenuOpen(false); navigate("/"); }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-                <span>Início</span>
-              </button>
-
-              <div className="nav-dropdown-divider" />
-
-              <p className="nav-dropdown-label">Explorar</p>
-
-              <button
-                className={`nav-dropdown-item ${activeView === 'cursos' ? 'active' : ''}`}
-                onClick={() => { setMenuOpen(false); navigate("/cursos"); }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                </svg>
-                <span>Todos os cursos</span>
-              </button>
-
-              <button
-                className={`nav-dropdown-item ${activeView === 'provas' ? 'active' : ''}`}
-                onClick={() => { setMenuOpen(false); navigate("/provas"); }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M9 9h6M9 13h6M9 17h4" />
-                </svg>
-                <span>Todas as provas</span>
-              </button>
-
-              <button
-                className={`nav-dropdown-item ${activeView === 'editais' ? 'active' : ''}`}
-                onClick={() => { setMenuOpen(false); navigate("/editais"); }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-                <span>Todos os editais</span>
-              </button>
-
-              <div className="nav-dropdown-divider" />
-
               {user ? (
                 <>
                   <div
@@ -171,20 +119,6 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                     </div>
                   </div>
 
-                  {isAdmin && (
-                    <button
-                      className="nav-dropdown-item"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        navigate("/admin");
-                      }}
-                      style={{ color: '#00875F', fontWeight: 'bold' }}
-                    >
-                      <ShieldCheck size={16} color="#00875F" />
-                      <span>Painel do Administrador</span>
-                    </button>
-                  )}
-
                   <div className="nav-dropdown-divider" />
 
                   <button
@@ -212,6 +146,46 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                   <span>Entrar / Cadastrar</span>
                 </button>
               )}
+
+              <div className="nav-dropdown-divider" />
+
+              <p className="nav-dropdown-label">Explorar</p>
+
+              <button
+                className={`nav-dropdown-item ${activeView === 'cursos' ? 'active' : ''}`}
+                onClick={() => { setMenuOpen(false); navigate("/cursos"); }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                </svg>
+                <span>Todos os cursos</span>
+              </button>
+
+              <button
+                className={`nav-dropdown-item ${activeView === 'provas' ? 'active' : ''}`}
+                onClick={() => { setMenuOpen(false); navigate("/provas"); }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M9 9h6M9 13h6M9 17h4" />
+                </svg>
+                <span>Todas as provas</span>
+              </button>
+
+              <button
+                className={`nav-dropdown-item ${activeView === 'editais' ? 'active' : ''}`}
+                onClick={() => { setMenuOpen(false); navigate("/editais"); }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                <span>Todos os editais</span>
+              </button>
+              
             </div>
           )}
         </div>
