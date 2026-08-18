@@ -14,13 +14,12 @@ export async function apiFetch(path, options = {}) {
     throw new Error(
       "A URL da API não está configurada para este ambiente."
     );
-  } 
+  }
 
   if (token) {
     defaultHeaders["Authorization"] = `Bearer ${token}`;
   }
 
-  // Se o body for FormData, NÃO definir Content-Type para que o browser defina o multipart/form-data boundary
   if (!(options.body instanceof FormData)) {
     defaultHeaders["Content-Type"] = "application/json";
   }
@@ -30,7 +29,6 @@ export async function apiFetch(path, options = {}) {
     ...(options.headers || {}),
   };
 
-  // Se por ventura o cabeçalho tiver passado Content-Type em FormData, removemos
   if (options.body instanceof FormData) {
     delete mergedHeaders["Content-Type"];
     delete mergedHeaders["content-type"];

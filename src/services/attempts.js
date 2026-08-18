@@ -4,7 +4,7 @@ export function calculateUserEvolution(attempts = []) {
   if (!attempts || attempts.length === 0) {
     return {
       level: "Primeiro Acesso",
-      badge: "🎓 Primeiro Acesso",
+      badge: "Primeiro Acesso",
       average: 0,
       count: 0,
       badgeColor: "#6b7280",
@@ -26,7 +26,7 @@ export function calculateUserEvolution(attempts = []) {
   if (average >= 85) {
     return {
       level: "Avançado",
-      badge: "🔥 Avançado",
+      badge: "Avançado",
       average,
       count: attempts.length,
       badgeColor: "#047857",
@@ -38,7 +38,7 @@ export function calculateUserEvolution(attempts = []) {
   if (average >= 60) {
     return {
       level: "Intermediário",
-      badge: "⚡ Intermediário",
+      badge: "Intermediário",
       average,
       count: attempts.length,
       badgeColor: "#1d4ed8",
@@ -49,7 +49,7 @@ export function calculateUserEvolution(attempts = []) {
 
   return {
     level: "Iniciante",
-    badge: "🌱 Iniciante",
+    badge: "Iniciante",
     average,
     count: attempts.length,
     badgeColor: "#b45309",

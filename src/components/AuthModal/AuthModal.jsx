@@ -1,47 +1,58 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/auth-context';
 import './AuthModal.css';
 
 export default function AuthModal() {
   const { isAuthModalOpen, authModalMode, closeAuthModal, login, register } = useAuth();
 
-  const [tab, setTab] = useState(authModalMode || 'login');
-  const [name, setName] = useState('');
+  const isOpen = Boolean(isAuthModalOpen);
+  const mode = authModalMode || 'login';
+
+  const [tab, setTab] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const emailInputRef = useRef(null);
 
   useEffect(() => {
-    if (!isAuthModalOpen) return undefined;
-    emailInputRef.current?.focus();
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') closeAuthModal();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [closeAuthModal, isAuthModalOpen]);
+    if (isOpen) {
+      setTab(mode);
+      setError('');
+      setTimeout(() => emailInputRef.current?.focus(), 50);
+    }
+  }, [isOpen, mode]);
 
-  if (!isAuthModalOpen) return null;
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        closeAuthModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, closeAuthModal]);
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setLoading(true);
 
     try {
       if (tab === 'login') {
         await login(email, password);
+        closeAuthModal();
       } else {
         await register(name, email, password);
+        closeAuthModal();
       }
-      closeAuthModal();
-      setName('');
-      setEmail('');
-      setPassword('');
     } catch (err) {
-      setError(err.message || 'Erro ao realizar autenticação. Tente novamente.');
+      setError(err.message || 'Ocorreu um erro ao processar sua solicitação.');
     } finally {
       setLoading(false);
     }
@@ -50,16 +61,18 @@ export default function AuthModal() {
   return (
     <div
       className="auth-modal-overlay"
-      onMouseDown={(event) => event.target === event.currentTarget && closeAuthModal()}
+      onClick={closeAuthModal}
+      role="presentation"
     >
       <div
         className="auth-modal-card"
+        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
       >
-        <button className="auth-modal-close" onClick={closeAuthModal} aria-label="Fechar">
-          ✕
+        <button className="auth-modal-close" onClick={closeAuthModal} aria-label="Fechar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <X size={18} />
         </button>
 
         <div className="auth-modal-header">
@@ -152,21 +165,23 @@ export default function AuthModal() {
           </div>
 
           {error && (
-            <div className="auth-modal-error" role="alert">
-              <span>⚠️</span> {error}
+            <div className="auth-modal-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <AlertCircle size={16} /> {error}
             </div>
           )}
 
           <button
             type="submit"
             className="auth-modal-submit-btn"
-            disabled={loading || !email || !password || (tab === 'register' && !name)}
+            disabled={loading}
           >
-            {loading
-              ? 'Aguarde...'
-              : tab === 'login'
-              ? 'Entrar no Sistema'
-              : 'Cadastrar e Acessar'}
+            {loading ? (
+              <span className="auth-spinner" />
+            ) : tab === 'login' ? (
+              'Entrar na Conta'
+            ) : (
+              'Cadastrar e Entrar'
+            )}
           </button>
         </form>
       </div>

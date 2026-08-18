@@ -1,3 +1,4 @@
+import { Crown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/auth-context";
@@ -136,7 +137,7 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                       {user.avatar ? (
                         <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
                       ) : (
-                        isAdmin ? '👑' : userInitial
+                        isAdmin ? <Crown size={18} color="#FFD700" /> : userInitial
                       )}
                     </div>
                     <div className="user-profile-info">

@@ -54,9 +54,9 @@ export default function EditaisPage() {
   }, [editais, statusFilter, anoFilter]);
 
   const formatStatusLabel = (statusKey) => {
-    if (statusKey === 'aberto') return '🟢 Em Aberto';
-    if (statusKey === 'ultimos_dias') return '⏳ Últimos Dias';
-    if (statusKey === 'fechado') return '🔴 Encerrados';
+    if (statusKey === 'aberto') return 'Em Aberto';
+    if (statusKey === 'ultimos_dias') return 'Últimos Dias';
+    if (statusKey === 'fechado') return 'Encerrados';
     return statusKey;
   };
 
@@ -117,13 +117,13 @@ export default function EditaisPage() {
                 <div className="edital-status-card-wrapper" key={edital.id}>
                   <div className="edital-status-header">
                     {edital.status === 'aberto' && (
-                      <span className="status-badge status-open">🟢 Inscrições Abertas</span>
+                      <span className="status-badge status-open">Inscrições Abertas</span>
                     )}
                     {edital.status === 'ultimos_dias' && (
-                      <span className="status-badge status-warning">⏳ Últimos Dias</span>
+                      <span className="status-badge status-warning">Últimos Dias</span>
                     )}
                     {edital.status === 'fechado' && (
-                      <span className="status-badge status-closed">🔴 Encerrado</span>
+                      <span className="status-badge status-closed">Encerrado</span>
                     )}
                   </div>
                   <EditalCard edital={edital} />
