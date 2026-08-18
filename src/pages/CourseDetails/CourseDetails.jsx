@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Edit } from "lucide-react";
 import "./CourseDetails.css";
 import { HeaderCourse } from "../../components";
 import { fetchCourseById } from "../../services/courses";
 import { fetchEditais } from "../../services/edital";
+import { useAuth } from "../../contexts/auth-context";
 
 function CourseDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [cursoAtual, setCursoAtual] = useState(null);
   const [relatedEditais, setRelatedEditais] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,6 +116,18 @@ function CourseDetails() {
 
   return (
     <div className="course-details-page">
+      {isAdmin && (
+        <div style={{ maxWidth: '1200px', margin: '0 auto 16px', padding: '16px 20px 0', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            className="admin-edit-element-btn"
+            onClick={() => navigate(`/admin?tab=curso&editId=${id}`)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#00875F', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+          >
+            <Edit size={16} /> Editar Este Curso
+          </button>
+        </div>
+      )}
       <HeaderCourse
         title={cursoAtual.course.name}
         image={cursoAtual.course.image}

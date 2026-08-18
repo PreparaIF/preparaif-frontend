@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { Edit } from "lucide-react";
+import { useAuth } from "../../contexts/auth-context";
 import "./CourseStyle.css";
 
 const FALLBACK_IMAGE =
@@ -26,6 +28,7 @@ const FALLBACK_LOGO =
 
 export default function CourseCard({ id, institute, course }) {
     const navigate = useNavigate();
+    const { isAdmin } = useAuth();
 
     const instData = institute || {};
     const courseData = course || {};
@@ -65,12 +68,28 @@ export default function CourseCard({ id, institute, course }) {
                     <span className="course-info">
                         Informações públicas no site da instituição
                     </span>
-                    <button
-                        className="course-button"
-                        onClick={() => navigate(`/curso/${id}`)}
-                    >
-                        Ver curso
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                className="course-button"
+                                style={{ background: '#e2e8f0', color: '#1e293b', padding: '6px 12px' }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/admin?tab=curso&editId=${id}`);
+                                }}
+                                title="Editar este curso"
+                            >
+                                <Edit size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Editar
+                            </button>
+                        )}
+                        <button
+                            className="course-button"
+                            onClick={() => navigate(`/curso/${id}`)}
+                        >
+                            Ver curso
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

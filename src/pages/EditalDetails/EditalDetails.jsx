@@ -1,13 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { useParams, useNavigate } from "react-router-dom";
+import { Edit } from "lucide-react";
 import { fetchEditalById } from "../../services/edital";
+import { useAuth } from "../../contexts/auth-context";
 import { ButtonVoltar } from "../../components";
 import "./EditalDetails.css";
 
 function EditalDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   const [edital, setEdital] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,8 +51,18 @@ function EditalDetails() {
 
   return (
     <div className="edict-page-container">
-      <div className="edict-top-nav">
+      <div className="edict-top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <ButtonVoltar />
+        {isAdmin && (
+          <button
+            type="button"
+            className="admin-edit-element-btn"
+            onClick={() => navigate(`/admin?tab=edital&editId=${id}`)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#00875F', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+          >
+            <Edit size={16} /> Editar Este Edital
+          </button>
+        )}
       </div>
 
       <div className="edict-content-split">
