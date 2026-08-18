@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { uploadDocumento } from '../../services/upload';
 import { fetchCourses, saveCourse } from '../../services/courses';
 import { fetchEditais, saveEdital } from '../../services/edital';
@@ -265,6 +266,7 @@ export default function AdminPage() {
           modality: result.course.modality || '',
           duration: result.course.duration || '',
           degree: result.course.degree || '',
+          image: result.course.image || result.course.imagem_url || '',
           instituteName: formData.instituteName || 'IFAL',
           editals: result.course.editals || [],
         };
@@ -442,6 +444,21 @@ export default function AdminPage() {
       if (!prev || !prev.course) return prev;
       return { ...prev, course: { ...prev.course, [field]: value } };
     });
+  };
+
+  const handleImageFileUpload = (e, callback) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        callback(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const toggleCourseEdital = (editalId) => {
@@ -1202,7 +1219,11 @@ export default function AdminPage() {
                       {result.edital.content && (
                         <div className="preview-edital-content">
                           <h4>Conteúdo Detalhado</h4>
-                          <p>{result.edital.content}</p>
+                          <div
+                            className="edict-html-content"
+                            style={{ lineHeight: '1.6', marginTop: '12px' }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.edital.content) }}
+                          />
                         </div>
                       )}
                     </div>
@@ -1211,6 +1232,11 @@ export default function AdminPage() {
                   {result.course && (
                     <div className="preview-course-card">
                       <h3 className="preview-doc-title">🎓 {result.course.title || 'Curso Extraído'}</h3>
+                      {(result.course.image || result.course.imagem_url) && (
+                        <div className="preview-course-image-box" style={{ margin: '12px 0', borderRadius: '12px', overflow: 'hidden', maxHeight: '240px' }}>
+                          <img src={result.course.image || result.course.imagem_url} alt={result.course.title} style={{ width: '100%', maxHeight: '240px', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                        </div>
+                      )}
                       <p className="preview-doc-description">{result.course.description}</p>
                       <div className="preview-course-grid">
                         <div><strong>Campus:</strong> {result.course.campus || 'N/A'}</div>
@@ -1297,16 +1323,37 @@ export default function AdminPage() {
 
                           <div className="form-row" style={{ marginTop: '10px' }}>
                             <div className="edit-q-block" style={{ margin: 0 }}>
-                              <label className="edit-label">URL / Caminho da Imagem (opcional):</label>
-                              <input
-                                type="text"
-                                className="edit-option-input"
-                                value={q.imagem_url || q.image || ''}
-                                onChange={e => updateQuestionField(idx, 'imagem_url', e.target.value)}
-                                placeholder="https://exemplo.com/imagem-questao.png"
-                              />
+                              <label className="edit-label">Imagem / Figura da Questão (Upload ou URL):</label>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '6px 12px', background: '#00875F', color: '#fff', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  📷 Enviar Imagem
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => handleImageFileUpload(e, (url) => updateQuestionField(idx, 'imagem_url', url))}
+                                  />
+                                </label>
+                                <input
+                                  type="text"
+                                  className="edit-option-input"
+                                  style={{ flex: 1, minWidth: '160px' }}
+                                  value={q.imagem_url || q.image || ''}
+                                  onChange={e => updateQuestionField(idx, 'imagem_url', e.target.value)}
+                                  placeholder="https://exemplo.com/imagem-questao.png"
+                                />
+                                {(q.imagem_url || q.image) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuestionField(idx, 'imagem_url', '')}
+                                    style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' }}
+                                  >
+                                    🗑️
+                                  </button>
+                                )}
+                              </div>
                               {(q.imagem_url || q.image) && (
-                                <div className="q-img-preview-box">
+                                <div className="q-img-preview-box" style={{ marginTop: '6px' }}>
                                   <img src={q.imagem_url || q.image} alt={`Visualização Q${idx + 1}`} onError={(e) => { e.target.style.display = 'none'; }} />
                                 </div>
                               )}
@@ -1416,6 +1463,42 @@ export default function AdminPage() {
                           placeholder="Conteúdo detalhado ou regras do edital..."
                         />
                       </div>
+                      <div className="edit-q-block" style={{ marginTop: '12px' }}>
+                        <label className="edit-label">Logo / Imagem do Instituto (Upload ou URL):</label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '6px 12px', background: '#00875F', color: '#fff', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            📷 Enviar Logo
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleImageFileUpload(e, (url) => updateEditalField('instituteLogo', url))}
+                            />
+                          </label>
+                          <input
+                            type="text"
+                            className="edit-option-input"
+                            style={{ flex: 1, minWidth: '160px' }}
+                            value={result.edital.instituteLogo || ''}
+                            onChange={e => updateEditalField('instituteLogo', e.target.value)}
+                            placeholder="https://exemplo.com/logo-instituto.png"
+                          />
+                          {result.edital.instituteLogo && (
+                            <button
+                              type="button"
+                              onClick={() => updateEditalField('instituteLogo', '')}
+                              style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                        {result.edital.instituteLogo && (
+                          <div style={{ marginTop: '6px', maxWidth: '120px', maxHeight: '60px' }}>
+                            <img src={result.edital.instituteLogo} alt="Logo Prev" style={{ maxHeight: '50px', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                          </div>
+                        )}
+                      </div>
                       <div className="edit-q-block" style={{ marginTop: '16px' }}>
                         <label className="edit-label">Cursos Relacionados:</label>
                         <div className="relations-checklist">
@@ -1462,6 +1545,42 @@ export default function AdminPage() {
                           rows={3}
                           placeholder="Detalhes e objetivos sobre o curso..."
                         />
+                      </div>
+                      <div className="edit-q-block" style={{ marginTop: '12px' }}>
+                        <label className="edit-label">Imagem / Capa do Curso (Upload ou URL):</label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '6px 12px', background: '#00875F', color: '#fff', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            📷 Enviar Capa do Curso
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleImageFileUpload(e, (url) => updateCourseField('image', url))}
+                            />
+                          </label>
+                          <input
+                            type="text"
+                            className="edit-option-input"
+                            style={{ flex: 1, minWidth: '160px' }}
+                            value={result.course.image || result.course.imagem_url || ''}
+                            onChange={e => updateCourseField('image', e.target.value)}
+                            placeholder="https://exemplo.com/capa-curso.png"
+                          />
+                          {(result.course.image || result.course.imagem_url) && (
+                            <button
+                              type="button"
+                              onClick={() => updateCourseField('image', '')}
+                              style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
+                        {(result.course.image || result.course.imagem_url) && (
+                          <div style={{ marginTop: '8px', maxWidth: '220px', maxHeight: '120px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                            <img src={result.course.image || result.course.imagem_url} alt="Preview Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                          </div>
+                        )}
                       </div>
                       <div className="course-specs-grid" style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
                         <div>

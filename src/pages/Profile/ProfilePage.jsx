@@ -78,6 +78,21 @@ export default function ProfilePage() {
     setPreferredModalities((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const handleFileUpload = (e, setTarget) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setTarget(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="profile-page">
       <div className="profile-top-bar">
@@ -152,22 +167,42 @@ export default function ProfilePage() {
           {activeTab === 'dados' && (
             <form onSubmit={handleSaveProfile} className="profile-form">
               <div className="form-group">
-                <label>Foto de Perfil (URL da Imagem ou Avatar)</label>
-                <div className="photo-input-group">
+                <label>Foto de Perfil</label>
+                <div className="photo-upload-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="upload-btn-row" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '10px 16px', background: '#00875F', color: '#fff', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      📷 Enviar Foto do Dispositivo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleFileUpload(e, setPhotoUrl)}
+                      />
+                    </label>
+                    {photoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPhotoUrl('')}
+                        style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        🗑️ Remover Foto
+                      </button>
+                    )}
+                  </div>
                   <input
-                    type="url"
+                    type="text"
                     className="profile-input"
-                    placeholder="https://exemplo.com/minha-foto.png"
+                    placeholder="Ou insira a URL direta da imagem (https://...)..."
                     value={photoUrl}
                     onChange={(e) => setPhotoUrl(e.target.value)}
                   />
                   {photoUrl && (
-                    <div className="photo-preview-thumb">
-                      <img src={photoUrl} alt="Preview" onError={() => setPhotoUrl('')} />
+                    <div className="photo-preview-thumb" style={{ marginTop: '8px' }}>
+                      <img src={photoUrl} alt="Preview" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #00875F' }} onError={() => setPhotoUrl('')} />
                     </div>
                   )}
                 </div>
-                <span className="form-hint">Cole o link direto da sua foto de perfil para exibição instantânea.</span>
+                <span className="form-hint">Faça o upload de uma imagem do seu dispositivo ou insira o link direto.</span>
               </div>
 
               <div className="form-row-2col">
