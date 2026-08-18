@@ -51,16 +51,14 @@ export default function ExamsList({ searchTerm = "" }) {
           {filteredExams.map((exam) => (
             <div className="exam-card-item" key={exam.id}>
               <div className="exam-card-header">
-                <span className="exam-badge">Exame Anterior</span>
+                <span className="exam-badge">{exam.examType || "Exame Anterior"}</span>
                 <h3 className="exam-card-title">{exam.title}</h3>
-                <span className="exam-card-meta">
-                  Processo Seletivo do Instituto Federal
-                </span>
+                {exam.year && <span className="exam-card-year">{exam.year}</span>}
               </div>
 
               <div className="exam-card-actions">
                 <span className="exam-questions-count">
-                  {exam.questions ? exam.questions.length : 0} questões
+                  {exam.questionCount ?? (exam.questions ? exam.questions.length : 0)} questões
                 </span>
                 <button
                   className="btn-start-exam"

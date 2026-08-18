@@ -131,9 +131,7 @@ function ExamDetails() {
         </div>
         <div className="intro-content">
           <h1 className="intro-title">
-            Você fará a prova para ingresso no curso
-            <br />
-            {examData.title}
+            Você fará {examData.title}
           </h1>
           <button
             className="btn-green-large"
@@ -260,7 +258,7 @@ function ExamDetails() {
     const getResultMessage = (pct) => {
       if (pct >= 80) {
         return {
-          title: "Excelente Desempenho! 🎉",
+          title: "Excelente Desempenho!",
           subtitle: "Você dominou o conteúdo desta prova. Parabéns!",
           color: "#059669",
           ringColor: "#10B981",
@@ -269,7 +267,7 @@ function ExamDetails() {
       }
       if (pct >= 50) {
         return {
-          title: "Bom Trabalho! 👍",
+          title: "Bom Trabalho!",
           subtitle: "Você teve um bom rendimento! Revise as questões que errou para melhorar ainda mais.",
           color: "#D97706",
           ringColor: "#F59E0B",
@@ -277,7 +275,7 @@ function ExamDetails() {
         };
       }
       return {
-        title: "Continue Praticando! 💪",
+        title: "Continue Praticando!",
         subtitle: "Não desanime! Cada tentativa é uma oportunidade de aprendizado. Revise o conteúdo e tente novamente.",
         color: "#DC2626",
         ringColor: "#EF4444",

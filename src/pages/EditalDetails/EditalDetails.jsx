@@ -78,7 +78,7 @@ function EditalDetails() {
           <div className="action-card">
             <div className="action-card-header">
               <div className="icone-instituto"></div>
-              <span className="nome-instituto">IFAL</span>
+              <span className="nome-instituto">Instituto Federal de Alagoas</span>
             </div>
 
             <h3 className="action-card-title">Fazer Provas anteriores</h3>

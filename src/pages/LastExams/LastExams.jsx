@@ -79,8 +79,8 @@ export default function LastExams() {
               onChange={(e) => setNivelFilter(e.target.value)}
             >
               <option value="">Todos os níveis</option>
-              <option value="tecnico">🛠️ Ensino Técnico</option>
-              <option value="superior">🏛️ Ensino Superior</option>
+              <option value="tecnico">Ensino Técnico</option>
+              <option value="superior">Ensino Superior</option>
             </select>
 
             <select
@@ -107,9 +107,14 @@ export default function LastExams() {
                 <div className="last-exam-card" key={exam.id}>
                   <div className="exam-card-cover">
                     <div className="cover-text-overlay">
-                      <span className="cover-subtitle">Exame Anterior</span>
+                      <span className="cover-subtitle">
+                        {exam.examType || 'Processo Seletivo IFAL'}
+                      </span>
                       <h3 className="cover-title">{exam.title}</h3>
                     </div>
+                    {exam.year && (
+                      <span className="exam-year-badge">{exam.year}</span>
+                    )}
                   </div>
 
                   <div className="exam-card-footer">

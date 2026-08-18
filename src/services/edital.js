@@ -9,7 +9,7 @@ function mapEdital(e) {
     description: e.description || "",
     content: e.content || "",
     time: e.time || "Avisos e Editais",
-    instituteName: e.instituteName || "IFAL",
+    instituteName: e.instituteName || "Instituto Federal de Alagoas",
     instituteLogo: e.instituteLogo || "",
     courseId: e.courseId || null,
     course: e.course || null,

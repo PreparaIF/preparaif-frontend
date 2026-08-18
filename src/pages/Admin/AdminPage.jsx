@@ -1,6 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
+import {
+  FileText,
+  ScrollText,
+  GraduationCap,
+  Edit,
+  AlertCircle,
+  CheckCircle2,
+  Search,
+  Trash2,
+  Plus,
+  Save,
+  Camera,
+  Home,
+  Sparkles,
+  Database,
+  Layers,
+  Monitor,
+  Check,
+  Folder,
+  Eye,
+  X
+} from 'lucide-react';
 import { uploadDocumento } from '../../services/upload';
 import { fetchCourses, saveCourse } from '../../services/courses';
 import { fetchEditais, saveEdital } from '../../services/edital';
@@ -9,9 +31,9 @@ import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './AdminPage.css';
 
 const TABS = [
-  { id: 'prova', label: '📄 Prova', desc: 'Extrai questões, alternativas e imagens' },
-  { id: 'edital', label: '📜 Edital', desc: 'Extrai título, descrição e conteúdo' },
-  { id: 'curso', label: '🎓 Curso', desc: 'Extrai nome, campus, turno e modalidade' },
+  { id: 'prova', label: 'Prova', desc: 'Extrai questões, alternativas e imagens', icon: FileText },
+  { id: 'edital', label: 'Edital', desc: 'Extrai título, descrição e conteúdo', icon: ScrollText },
+  { id: 'curso', label: 'Curso', desc: 'Extrai nome, campus, turno e modalidade', icon: GraduationCap },
 ];
 
 export default function AdminPage() {
@@ -47,7 +69,7 @@ export default function AdminPage() {
     exame_num: '',
     texto: '',
     titulo_personalizado: '',
-    instituteName: 'IFAL',
+    instituteName: 'Instituto Federal de Alagoas - Campus Arapiraca',
   });
   const [file, setFile] = useState(null);
   const [fileGabarito, setFileGabarito] = useState(null);
@@ -168,7 +190,7 @@ export default function AdminPage() {
     setFile(null);
     setFileGabarito(null);
     setIsEditingExisting(false);
-    setFormData({ ano: '', exame_num: '', texto: '', titulo_personalizado: '', instituteName: 'IFAL' });
+    setFormData({ ano: '', exame_num: '', texto: '', titulo_personalizado: '', instituteName: 'Instituto Federal de Alagoas - Campus Arapiraca' });
   };
 
   const handleSubmit = async (e) => {
@@ -252,7 +274,7 @@ export default function AdminPage() {
           description: result.edital.description || '',
           content: result.edital.content || '',
           time: result.edital.time || 'Avisos e Editais',
-          instituteName: result.edital.instituteName || formData.instituteName || 'IFAL',
+          instituteName: result.edital.instituteName || formData.instituteName || 'Instituto Federal de Alagoas - Campus Arapiraca',
           instituteLogo: result.edital.instituteLogo || '',
           courseId: result.edital.courses?.[0] || result.edital.courseId || null,
         };
@@ -267,7 +289,7 @@ export default function AdminPage() {
           duration: result.course.duration || '',
           degree: result.course.degree || '',
           image: result.course.image || result.course.imagem_url || '',
-          instituteName: formData.instituteName || 'IFAL',
+          instituteName: formData.instituteName || 'Instituto Federal de Alagoas - Campus Arapiraca',
           editals: result.course.editals || [],
         };
         await saveCourse(coursePayload, isEditingExisting, editingId);
@@ -293,7 +315,7 @@ export default function AdminPage() {
       setDbExams(exams || []);
       setMessage({
         type: 'success',
-        text: `✅ ${isEditingExisting ? 'Registro atualizado' : 'Registro salvo'} com sucesso no Banco de Dados!`,
+        text: `${isEditingExisting ? 'Registro atualizado' : 'Registro salvo'} com sucesso no Banco de Dados!`,
       });
     } catch (err) {
       console.error("Erro ao salvar no banco:", err);
@@ -484,7 +506,7 @@ export default function AdminPage() {
       exame_num: item.examType || item.title.match(/exame\s*(\d+)/i)?.[1] || '01',
       texto: '',
       titulo_personalizado: item.title,
-      instituteName: 'IFAL',
+      instituteName: 'Instituto Federal de Alagoas - Campus Arapiraca',
     });
     setResult({
       id: item.id,
@@ -505,7 +527,7 @@ export default function AdminPage() {
       exame_num: '',
       texto: '',
       titulo_personalizado: item.title,
-      instituteName: 'IFAL',
+      instituteName: 'Instituto Federal de Alagoas - Campus Arapiraca',
     });
     setResult({ edital: { ...item, courses: item.courseId ? [item.courseId] : [] } });
     setMessage({ type: 'success', text: `Edital "${item.title}" carregado do banco.` });
@@ -520,7 +542,7 @@ export default function AdminPage() {
       exame_num: '',
       texto: '',
       titulo_personalizado: item.course.name,
-      instituteName: item.institute?.name || 'IFAL',
+      instituteName: item.institute?.name || 'Instituto Federal de Alagoas - Campus Arapiraca',
     });
     setResult({
       course: {
@@ -542,7 +564,7 @@ export default function AdminPage() {
 
   const activeTabInfo = TABS.find(t => t.id === activeTab) || {
     id: 'editar',
-    label: '✏️ Editar Registros',
+    label: 'Editar Registros',
     desc: 'Consulte e edite dados cadastrados no banco'
   };
 
@@ -561,7 +583,7 @@ export default function AdminPage() {
             </div>
 
             <div className="restricted-icon-wrapper">
-              <span className="restricted-icon">💻</span>
+              <Monitor size={32} color="#00875F" />
             </div>
 
             <h2>Painel Indisponível em Celulares</h2>
@@ -571,10 +593,10 @@ export default function AdminPage() {
 
             <div className="restricted-features">
               <div className="feature-chip">
-                <span>📄 Extração Avançada de PDFs & Textos</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><FileText size={16} /> Extração Avançada de PDFs & Textos</span>
               </div>
               <div className="feature-chip">
-                <span>✏️ Edição de Provas, Cursos e Editais</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Edit size={16} /> Edição de Provas, Cursos e Editais</span>
               </div>
             </div>
 
@@ -583,7 +605,7 @@ export default function AdminPage() {
             </p>
 
             <button className="btn-back-home" onClick={() => navigate('/')}>
-              <span>🏠 Voltar para a Página Inicial</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Home size={16} /> Voltar para a Página Inicial</span>
             </button>
           </div>
         </div>
@@ -607,16 +629,21 @@ export default function AdminPage() {
       <div className="admin-layout">
         <aside className="admin-sidebar">
           <p className="sidebar-label">Extração de Arquivos</p>
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              className={`sidebar-tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => handleTabChange(tab.id)}
-            >
-              <span className="sidebar-tab-label">{tab.label}</span>
-              <span className="sidebar-tab-desc">{tab.desc}</span>
-            </button>
-          ))}
+          {TABS.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                className={`sidebar-tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => handleTabChange(tab.id)}
+              >
+                <span className="sidebar-tab-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <Icon size={18} /> {tab.label}
+                </span>
+                <span className="sidebar-tab-desc">{tab.desc}</span>
+              </button>
+            );
+          })}
 
           <div className="sidebar-divider" />
 
@@ -625,7 +652,9 @@ export default function AdminPage() {
             className={`sidebar-tab ${activeTab === 'editar' ? 'active' : ''}`}
             onClick={() => handleTabChange('editar')}
           >
-            <span className="sidebar-tab-label">✏️ Editar Registros</span>
+            <span className="sidebar-tab-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <Edit size={18} /> Editar Registros
+            </span>
             <span className="sidebar-tab-desc">Consulte e edite dados do banco</span>
           </button>
         </aside>
@@ -633,14 +662,14 @@ export default function AdminPage() {
         <main className="admin-main">
           {message.text && (
             <div className={`admin-alert ${message.type}`}>
-              {message.type === 'success' ? '✅' : '❌'} {message.text}
+              {message.type === 'success' ? <CheckCircle2 size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> : <AlertCircle size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} />} {message.text}
             </div>
           )}
 
           {activeTab === 'editar' ? (
             <div className="admin-form-card">
               <div className="form-card-header">
-                <h2>✏️ Registros do Banco de Dados</h2>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Edit size={22} color="#00875F" /> Registros do Banco de Dados</h2>
                 <span className="form-card-hint">
                   Clique na categoria para expandir ou digite na pesquisa para filtrar automaticamente.
                 </span>
@@ -650,7 +679,7 @@ export default function AdminPage() {
                 <input
                   type="text"
                   className="manage-search-input"
-                  placeholder="🔍 Digite para pesquisar por título, ano ou instituição..."
+                  placeholder="Digite para pesquisar por título, ano ou instituição..."
                   value={dbSearchTerm}
                   onChange={handleSearchChange}
                 />
@@ -663,7 +692,7 @@ export default function AdminPage() {
                     className={`category-header-btn ${openCategories.prova ? 'open' : ''}`}
                     onClick={() => toggleCategory('prova')}
                   >
-                    <h3>📄 Provas Cadastradas <span className="category-count">({filteredExams.length})</span></h3>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={18} /> Provas Cadastradas <span className="category-count">({filteredExams.length})</span></h3>
                     <span className="category-arrow">{openCategories.prova ? '▲' : '▼'}</span>
                   </button>
 
@@ -703,7 +732,47 @@ export default function AdminPage() {
                     className={`category-header-btn ${openCategories.edital ? 'open' : ''}`}
                     onClick={() => toggleCategory('edital')}
                   >
-                    <h3>📜 Editais Cadastrados <span className="category-count">({filteredEditais.length})</span></h3>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><ScrollText size={18} /> Editais Cadastrados <span className="category-count">({filteredEditais.length})</span></h3>
+                    <span className="category-arrow">{openCategories.edital ? '▲' : '▼'}</span>
+                  </button>
+
+                  {openCategories.prova && (
+                    <div className="category-items-list">
+                      {filteredExams.length === 0 ? (
+                        <p className="empty-category-text">Nenhuma prova encontrada.</p>
+                      ) : (
+                        filteredExams.map(ex => (
+                          <div key={ex.id} className="manage-item-row">
+                            <div className="item-main-info">
+                              <span className="item-title">{ex.title}</span>
+                              <span className="item-meta">{ex.questions?.length || 0} questões cadastradas</span>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-edit-item"
+                              onClick={() => handleEditExam(ex)}
+                              title="Editar esta prova"
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                              <span>Editar</span>
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="manage-category-card">
+                  <button
+                    type="button"
+                    className={`category-header-btn ${openCategories.edital ? 'open' : ''}`}
+                    onClick={() => toggleCategory('edital')}
+                  >
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><ScrollText size={18} /> Editais Cadastrados <span className="category-count">({filteredEditais.length})</span></h3>
                     <span className="category-arrow">{openCategories.edital ? '▲' : '▼'}</span>
                   </button>
 
@@ -743,7 +812,7 @@ export default function AdminPage() {
                     className={`category-header-btn ${openCategories.curso ? 'open' : ''}`}
                     onClick={() => toggleCategory('curso')}
                   >
-                    <h3>🎓 Cursos Cadastrados <span className="category-count">({filteredCourses.length})</span></h3>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><GraduationCap size={18} /> Cursos Cadastrados <span className="category-count">({filteredCourses.length})</span></h3>
                     <span className="category-arrow">{openCategories.curso ? '▲' : '▼'}</span>
                   </button>
 
@@ -784,7 +853,7 @@ export default function AdminPage() {
                 <div className="form-card-header-main">
                   <div>
                     <h2>
-                      {isEditingExisting ? `✏️ Edição de ${activeTabInfo.label}` : activeTabInfo.label}
+                      {isEditingExisting ? `Edição de ${activeTabInfo.label}` : activeTabInfo.label}
                     </h2>
                     <span className="form-card-hint">
                       {isEditingExisting
@@ -802,8 +871,9 @@ export default function AdminPage() {
                         setMessage({ type: '', text: '' });
                       }}
                       title="Cancelar edição e voltar para novo upload"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
-                      ❌ Cancelar Edição
+                      <X size={16} /> Cancelar Edição
                     </button>
                   ) : (
                     <button
@@ -908,7 +978,7 @@ export default function AdminPage() {
                   <input
                     type="text"
                     name="instituteName"
-                    placeholder="Ex: IFAL"
+                    placeholder="Ex: Instituto Federal de Alagoas - Campus Arapiraca"
                     value={formData.instituteName}
                     onChange={handleInputChange}
                   />
@@ -938,7 +1008,7 @@ export default function AdminPage() {
                             />
                             {file ? (
                               <div className="drop-zone-file">
-                                <span className="drop-zone-icon">📄</span>
+                                <FileText size={24} color="#00875F" />
                                 <div>
                                   <p className="drop-zone-filename">{file.name}</p>
                                   <p className="drop-zone-size">
@@ -948,7 +1018,7 @@ export default function AdminPage() {
                               </div>
                             ) : (
                               <div className="drop-zone-empty compact">
-                                <span className="drop-zone-icon-sm">📁</span>
+                                <Folder size={20} color="#00875F" />
                                 <div>
                                   <p className="drop-zone-text-sm">Arraste o PDF da Prova aqui ou clique para procurar</p>
                                   <p className="drop-zone-hint">Suporte a PDFs de até 50 MB</p>
@@ -976,7 +1046,7 @@ export default function AdminPage() {
                             />
                             {fileGabarito ? (
                               <div className="drop-zone-file">
-                                <span className="drop-zone-icon">📊</span>
+                                <FileText size={24} color="#00875F" />
                                 <div>
                                   <p className="drop-zone-filename">{fileGabarito.name}</p>
                                   <p className="drop-zone-size">
@@ -986,7 +1056,7 @@ export default function AdminPage() {
                               </div>
                             ) : (
                               <div className="drop-zone-empty compact">
-                                <span className="drop-zone-icon-sm">📁</span>
+                                <Folder size={20} color="#00875F" />
                                 <div>
                                   <p className="drop-zone-text-sm">Arraste o PDF do Gabarito aqui ou clique para procurar</p>
                                   <p className="drop-zone-hint">Opcional — vincula as respostas automáticas</p>
@@ -1015,7 +1085,7 @@ export default function AdminPage() {
                           />
                           {file ? (
                             <div className="drop-zone-file">
-                              <span className="drop-zone-icon">📄</span>
+                              <FileText size={24} color="#00875F" />
                               <div>
                                 <p className="drop-zone-filename">{file.name}</p>
                                 <p className="drop-zone-size">
@@ -1025,7 +1095,7 @@ export default function AdminPage() {
                             </div>
                           ) : (
                             <div className="drop-zone-empty">
-                              <span className="drop-zone-icon">📁</span>
+                              <Folder size={28} color="#00875F" />
                               <p className="drop-zone-text">
                                 Arraste o PDF do {activeTab === 'edital' ? 'Edital' : 'Curso'} aqui ou clique para procurar
                               </p>
@@ -1050,14 +1120,16 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <button type="submit" className="submit-btn" disabled={loading}>
+                  <button type="submit" className="submit-btn" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                     {loading ? (
                       <>
                         <span className="spinner" />
                         Processando com Inteligência Artificial...
                       </>
                     ) : (
-                      `🚀 Extrair ${activeTabInfo.label.split(' ')[1] || 'Dados'}`
+                      <>
+                        <Sparkles size={18} /> Extrair {activeTabInfo.label}
+                      </>
                     )}
                   </button>
                 </>
@@ -1074,22 +1146,16 @@ export default function AdminPage() {
                     className={`result-subtab-btn ${resultSubTab === 'preview' ? 'active' : ''}`}
                     onClick={() => setResultSubTab('preview')}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    <span>👁️ Preview (Visualização)</span>
+                    <Eye size={16} />
+                    <span>Preview (Visualização)</span>
                   </button>
                   <button
                     type="button"
                     className={`result-subtab-btn ${resultSubTab === 'edicao' ? 'active' : ''}`}
                     onClick={() => setResultSubTab('edicao')}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    <span>✏️ Edição (Ajustar Dados)</span>
+                    <Edit size={16} />
+                    <span>Edição (Ajustar Dados)</span>
                   </button>
                 </div>
 
@@ -1098,8 +1164,9 @@ export default function AdminPage() {
                   className="btn-save-db active"
                   disabled={savingDb}
                   onClick={handleSaveToDb}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  {savingDb ? 'Salvando...' : '💾 Salvar Alterações no Banco'}
+                  <Save size={16} /> {savingDb ? 'Salvando...' : 'Salvar Alterações no Banco'}
                 </button>
               </div>
 
@@ -1108,8 +1175,8 @@ export default function AdminPage() {
                   {result.questoes && (
                     <div className="questions-preview-list">
                       <div className="preview-document-header">
-                        <h3 className="preview-doc-title">
-                          📄 {result.title || formData.titulo_personalizado || `Prova ${formData.ano || ''}`}
+                        <h3 className="preview-doc-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <FileText size={20} color="#00875F" /> {result.title || formData.titulo_personalizado || `Prova ${formData.ano || ''}`}
                         </h3>
                         <div className="preview-doc-meta-bar">
                           <span className="meta-badge-green">{result.questoes.length} Questões Extraídas</span>
@@ -1129,14 +1196,14 @@ export default function AdminPage() {
                         let gabaritoBadgeClass = 'preview-gabarito-tag';
 
                         if (isAnnulled) {
-                          gabaritoBadgeText = '⚠ Questão anulada';
+                          gabaritoBadgeText = 'Questão anulada';
                           gabaritoBadgeClass = 'preview-gabarito-tag is-annulled';
                         } else if (isUnknown) {
-                          gabaritoBadgeText = '⚠ Gabarito não identificado';
+                          gabaritoBadgeText = 'Gabarito não identificado';
                           gabaritoBadgeClass = 'preview-gabarito-tag is-unknown';
                         } else {
                           const optChar = q.answerKey || (Number.isInteger(correctOptIndex) ? String.fromCharCode(65 + correctOptIndex) : (q.gabarito_letra || '?'));
-                          gabaritoBadgeText = `✓ Gabarito: Alternativa ${optChar}${isChanged ? ' (Alterado após recurso)' : ''}`;
+                          gabaritoBadgeText = `Gabarito: Alternativa ${optChar}${isChanged ? ' (Alterado após recurso)' : ''}`;
                           gabaritoBadgeClass = 'preview-gabarito-tag is-valid';
                         }
 
@@ -1201,7 +1268,7 @@ export default function AdminPage() {
                                   <div key={oIdx} className={`preview-option-item ${isCorrect ? 'correct' : ''}`}>
                                     <span className="preview-opt-letter">{letter}</span>
                                     <span className="preview-opt-text">{opt}</span>
-                                    {isCorrect && <span className="preview-opt-check">✓ Resposta Correta</span>}
+                                    {isCorrect && <span className="preview-opt-check"><Check size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Resposta Correta</span>}
                                   </div>
                                 );
                               })}
@@ -1214,7 +1281,7 @@ export default function AdminPage() {
 
                   {result.edital && (
                     <div className="preview-edital-card">
-                      <h3 className="preview-doc-title">📄 {result.edital.title || 'Edital Extraído'}</h3>
+                      <h3 className="preview-doc-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><ScrollText size={20} color="#00875F" /> {result.edital.title || 'Edital Extraído'}</h3>
                       <p className="preview-doc-description">{result.edital.description}</p>
                       {result.edital.content && (
                         <div className="preview-edital-content">
@@ -1231,7 +1298,7 @@ export default function AdminPage() {
 
                   {result.course && (
                     <div className="preview-course-card">
-                      <h3 className="preview-doc-title">🎓 {result.course.title || 'Curso Extraído'}</h3>
+                      <h3 className="preview-doc-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><GraduationCap size={20} color="#00875F" /> {result.course.title || 'Curso Extraído'}</h3>
                       {(result.course.image || result.course.imagem_url) && (
                         <div className="preview-course-image-box" style={{ margin: '12px 0', borderRadius: '12px', overflow: 'hidden', maxHeight: '240px' }}>
                           <img src={result.course.image || result.course.imagem_url} alt={result.course.title} style={{ width: '100%', maxHeight: '240px', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
@@ -1260,8 +1327,9 @@ export default function AdminPage() {
                           type="button"
                           className="btn-add-q"
                           onClick={addQuestion}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         >
-                          ➕ Adicionar Nova Questão
+                          <Plus size={16} /> Adicionar Nova Questão
                         </button>
                       </div>
 
@@ -1304,8 +1372,9 @@ export default function AdminPage() {
                                 className="btn-remove-q"
                                 onClick={() => removeQuestion(idx)}
                                 title="Remover esta questão"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                               >
-                                🗑️ Remover
+                                <Trash2 size={14} /> Remover
                               </button>
                             </div>
                           </div>
@@ -1326,7 +1395,7 @@ export default function AdminPage() {
                               <label className="edit-label">Imagem / Figura da Questão (Upload ou URL):</label>
                               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '6px 12px', background: '#00875F', color: '#fff', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  📷 Enviar Imagem
+                                  <Camera size={14} /> Enviar Imagem
                                   <input
                                     type="file"
                                     accept="image/*"
@@ -1346,9 +1415,9 @@ export default function AdminPage() {
                                   <button
                                     type="button"
                                     onClick={() => updateQuestionField(idx, 'imagem_url', '')}
-                                    style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' }}
+                                    style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
                                   >
-                                    🗑️
+                                    <Trash2 size={14} />
                                   </button>
                                 )}
                               </div>
@@ -1390,8 +1459,9 @@ export default function AdminPage() {
                                   type="button"
                                   className="btn-add-opt"
                                   onClick={() => addQuestionOption(idx)}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                  ➕ Alternativa
+                                  <Plus size={14} /> Alternativa
                                 </button>
                               </div>
                               {q.options.map((opt, oIdx) => (
@@ -1410,7 +1480,7 @@ export default function AdminPage() {
                                     placeholder={`Alternativa ${String.fromCharCode(65 + oIdx)}...`}
                                   />
                                   {oIdx === q.correctAnswerIndex && (
-                                    <span className="correct-tag">✓ Correta</span>
+                                    <span className="correct-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><Check size={12} /> Correta</span>
                                   )}
                                   {q.options.length > 2 && (
                                     <button
@@ -1418,8 +1488,9 @@ export default function AdminPage() {
                                       className="btn-remove-opt"
                                       onClick={() => removeQuestionOption(idx, oIdx)}
                                       title="Remover esta alternativa"
+                                      style={{ display: 'inline-flex', alignItems: 'center' }}
                                     >
-                                      ✖
+                                      <X size={14} />
                                     </button>
                                   )}
                                 </div>
@@ -1467,7 +1538,7 @@ export default function AdminPage() {
                         <label className="edit-label">Logo / Imagem do Instituto (Upload ou URL):</label>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                           <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '6px 12px', background: '#00875F', color: '#fff', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            📷 Enviar Logo
+                            <Camera size={14} /> Enviar Logo
                             <input
                               type="file"
                               accept="image/*"
@@ -1487,9 +1558,9 @@ export default function AdminPage() {
                             <button
                               type="button"
                               onClick={() => updateEditalField('instituteLogo', '')}
-                              style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' }}
+                              style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
                             >
-                              🗑️
+                              <Trash2 size={14} />
                             </button>
                           )}
                         </div>
@@ -1550,7 +1621,7 @@ export default function AdminPage() {
                         <label className="edit-label">Imagem / Capa do Curso (Upload ou URL):</label>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                           <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '6px 12px', background: '#00875F', color: '#fff', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            📷 Enviar Capa do Curso
+                            <Camera size={14} /> Enviar Capa do Curso
                             <input
                               type="file"
                               accept="image/*"
@@ -1570,9 +1641,9 @@ export default function AdminPage() {
                             <button
                               type="button"
                               onClick={() => updateCourseField('image', '')}
-                              style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer' }}
+                              style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
                             >
-                              🗑️
+                              <Trash2 size={14} />
                             </button>
                           )}
                         </div>

@@ -1,5 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  User,
+  Target,
+  Zap,
+  Crown,
+  Camera,
+  Trash2,
+  Save,
+  Laptop,
+  Ruler,
+  Dna,
+  BarChart3,
+  Wrench,
+  GraduationCap,
+  BookOpen,
+  Settings,
+  Rocket,
+  FileText,
+  Database
+} from 'lucide-react';
 import { useAuth } from '../../contexts/auth-context';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './ProfilePage.css';
@@ -15,7 +35,6 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState(user?.phone || '');
   const [campus, setCampus] = useState(user?.campus || 'Maceió');
 
-  // Preferências
   const [preferredAreas, setPreferredAreas] = useState(user?.preferences?.areas || {
     tecnologia: true,
     exatas: false,
@@ -64,7 +83,6 @@ export default function ProfilePage() {
         },
       });
     } catch {
-      // O contexto já apresenta a mensagem de erro ao usuário.
     } finally {
       setSaving(false);
     }
@@ -101,14 +119,13 @@ export default function ProfilePage() {
       </div>
 
       <div className="profile-layout">
-        {/* Banner do Perfil */}
         <div className="profile-hero-card">
           <div className="profile-avatar-wrapper">
             {photoUrl ? (
               <img src={photoUrl} alt={name} className="profile-avatar-img" onError={() => setPhotoUrl('')} />
             ) : (
               <div className="profile-avatar-placeholder">
-                {isAdmin ? '👑' : userInitial}
+                {isAdmin ? <Crown size={28} color="#FFD700" /> : userInitial}
               </div>
             )}
           </div>
@@ -138,31 +155,29 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Abas de Navegação */}
         <div className="profile-tabs-header">
           <button
             className={`profile-tab-btn ${activeTab === 'dados' ? 'active' : ''}`}
             onClick={() => setActiveTab('dados')}
           >
-            👤 Dados Pessoais
+            <User size={18} /> Dados Pessoais
           </button>
           <button
             className={`profile-tab-btn ${activeTab === 'preferencias' ? 'active' : ''}`}
             onClick={() => setActiveTab('preferencias')}
           >
-            🎯 Preferências de Conteúdo
+            <Target size={18} /> Preferências de Conteúdo
           </button>
           {isAdmin && (
             <button
               className={`profile-tab-btn admin-tab ${activeTab === 'admin' ? 'active' : ''}`}
               onClick={() => setActiveTab('admin')}
             >
-              ⚡ Painel de Extração
+              <Zap size={18} /> Painel de Extração
             </button>
           )}
         </div>
 
-        {/* Conteúdo das Abas */}
         <div className="profile-card">
           {activeTab === 'dados' && (
             <form onSubmit={handleSaveProfile} className="profile-form">
@@ -171,7 +186,7 @@ export default function ProfilePage() {
                 <div className="photo-upload-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div className="upload-btn-row" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '10px 16px', background: '#00875F', color: '#fff', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      📷 Enviar Foto do Dispositivo
+                      <Camera size={16} /> Enviar Foto do Dispositivo
                       <input
                         type="file"
                         accept="image/*"
@@ -183,9 +198,9 @@ export default function ProfilePage() {
                       <button
                         type="button"
                         onClick={() => setPhotoUrl('')}
-                        style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+                        style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       >
-                        🗑️ Remover Foto
+                        <Trash2 size={14} /> Remover Foto
                       </button>
                     )}
                   </div>
@@ -239,7 +254,6 @@ export default function ProfilePage() {
                 >
                   <option value="Maceió">Campus Maceió</option>
                   <option value="Arapiraca">Campus Arapiraca</option>
-
                 </select>
               </div>
 
@@ -255,8 +269,8 @@ export default function ProfilePage() {
               </div>
 
               <div className="profile-form-actions">
-                <button type="submit" className="btn-save-profile" disabled={saving}>
-                  {saving ? 'Salvando...' : '💾 Salvar Dados Pessoais'}
+                <button type="submit" className="btn-save-profile" disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <Save size={18} /> {saving ? 'Salvando...' : 'Salvar Dados Pessoais'}
                 </button>
               </div>
             </form>
@@ -274,7 +288,7 @@ export default function ProfilePage() {
                     checked={preferredAreas.tecnologia}
                     onChange={() => toggleArea('tecnologia')}
                   />
-                  <span>💻 Tecnologia & Informática</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Laptop size={16} /> Tecnologia & Informática</span>
                 </label>
 
                 <label className={`pref-chip ${preferredAreas.exatas ? 'selected' : ''}`}>
@@ -283,7 +297,7 @@ export default function ProfilePage() {
                     checked={preferredAreas.exatas}
                     onChange={() => toggleArea('exatas')}
                   />
-                  <span>📐 Engenharia & Exatas</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Ruler size={16} /> Engenharia & Exatas</span>
                 </label>
 
                 <label className={`pref-chip ${preferredAreas.biologicas ? 'selected' : ''}`}>
@@ -292,7 +306,7 @@ export default function ProfilePage() {
                     checked={preferredAreas.biologicas}
                     onChange={() => toggleArea('biologicas')}
                   />
-                  <span>🧬 Ciências Biológicas & Saúde</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Dna size={16} /> Ciências Biológicas & Saúde</span>
                 </label>
 
                 <label className={`pref-chip ${preferredAreas.gestao ? 'selected' : ''}`}>
@@ -301,7 +315,7 @@ export default function ProfilePage() {
                     checked={preferredAreas.gestao}
                     onChange={() => toggleArea('gestao')}
                   />
-                  <span>📊 Gestão & Negócios</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><BarChart3 size={16} /> Gestão & Negócios</span>
                 </label>
               </div>
 
@@ -314,7 +328,7 @@ export default function ProfilePage() {
                     checked={preferredModalities.tecnico}
                     onChange={() => toggleModality('tecnico')}
                   />
-                  <span>🛠️ Ensino Técnico</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Wrench size={16} /> Ensino Técnico</span>
                 </label>
 
                 <label className={`pref-chip ${preferredModalities.bacharelado ? 'selected' : ''}`}>
@@ -323,7 +337,7 @@ export default function ProfilePage() {
                     checked={preferredModalities.bacharelado}
                     onChange={() => toggleModality('bacharelado')}
                   />
-                  <span>🎓 Bacharelado</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><GraduationCap size={16} /> Bacharelado</span>
                 </label>
 
                 <label className={`pref-chip ${preferredModalities.licenciatura ? 'selected' : ''}`}>
@@ -332,7 +346,7 @@ export default function ProfilePage() {
                     checked={preferredModalities.licenciatura}
                     onChange={() => toggleModality('licenciatura')}
                   />
-                  <span>📚 Licenciatura</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><BookOpen size={16} /> Licenciatura</span>
                 </label>
 
                 <label className={`pref-chip ${preferredModalities.tecnologo ? 'selected' : ''}`}>
@@ -341,13 +355,13 @@ export default function ProfilePage() {
                     checked={preferredModalities.tecnologo}
                     onChange={() => toggleModality('tecnologo')}
                   />
-                  <span>⚙️ Tecnólogo</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Settings size={16} /> Tecnólogo</span>
                 </label>
               </div>
 
               <div className="profile-form-actions" style={{ marginTop: '32px' }}>
-                <button type="submit" className="btn-save-profile" disabled={saving}>
-                  {saving ? 'Salvando...' : '🎯 Salvar Preferências'}
+                <button type="submit" className="btn-save-profile" disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <Target size={18} /> {saving ? 'Salvando...' : 'Salvar Preferências'}
                 </button>
               </div>
             </form>
@@ -357,7 +371,7 @@ export default function ProfilePage() {
             <div className="admin-profile-section">
               <div className="admin-banner-box">
                 <div className="admin-banner-text">
-                  <h3>⚡ Painel de Extração e Controle Administrativo</h3>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Zap size={22} color="#00875F" /> Painel de Extração e Controle Administrativo</h3>
                   <p>
                     Como Administrador, você tem permissão total para extrair PDFs de exames, criar e editar novos Editais, Cursos e Provas no banco de dados.
                   </p>
@@ -366,19 +380,20 @@ export default function ProfilePage() {
                   type="button"
                   className="btn-launch-extraction"
                   onClick={() => navigate('/admin')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 >
-                  🚀 Abrir Painel de Extração
+                  <Rocket size={18} /> Abrir Painel de Extração
                 </button>
               </div>
 
               <div className="admin-info-grid">
                 <div className="admin-info-card">
-                  <h4>📄 Extração Inteligente de PDFs</h4>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={18} /> Extração Inteligente de PDFs</h4>
                   <p>Upload e leitor com IA para extrair provas, textos de apoio, imagens, opções e gabaritos automaticamente.</p>
                 </div>
 
                 <div className="admin-info-card">
-                  <h4>🗄️ Conexão direta com Banco Supabase</h4>
+                  <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Database size={18} /> Conexão direta com Banco Supabase</h4>
                   <p>Sincronização em tempo real das tabelas PostgreSQL de Provas, Questões, Cursos e Editais.</p>
                 </div>
               </div>

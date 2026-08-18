@@ -14,7 +14,7 @@ function mapCourse(c) {
   return {
     id: c.id,
     institute: {
-      name: c.instituteName || "IFAL",
+      name: c.instituteName || "Instituto Federal de Alagoas",
       logo: c.instituteLogo || "",
     },
     course: {
