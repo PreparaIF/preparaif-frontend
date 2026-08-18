@@ -235,6 +235,7 @@ export default function AdminPage() {
             text: q.text || q.enunciado || q.statement || '',
             supportText: q.supportText || q.texto_apoio || q.texto_de_apoio || '',
             imageUrl: q.imageUrl || q.imagem_url || q.image || '',
+            imageUrls: q.imageUrls || q.images || q.imagens || (q.imageUrl || q.imagem_url || q.image ? [q.imageUrl || q.imagem_url || q.image] : []),
             credits: q.credits || q.creditos || q.source || '',
             options: q.options || q.opcoes || [],
             correctAnswerIndex: (q.correctAnswerIndex !== undefined && q.correctAnswerIndex !== null) ? q.correctAnswerIndex : (q.gabarito !== undefined ? q.gabarito : null),
@@ -1128,6 +1129,12 @@ export default function AdminPage() {
                           ? q.opcoes
                           : ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
                         const textoEnunciado = q.text || q.enunciado || 'Sem enunciado';
+                        const imagensQuestao = [
+                          ...(Array.isArray(q.imageUrls) ? q.imageUrls : []),
+                          ...(Array.isArray(q.images) ? q.images : []),
+                          ...(Array.isArray(q.imagens) ? q.imagens : []),
+                          ...(q.imagem_url || q.imageUrl || q.image ? [q.imagem_url || q.imageUrl || q.image] : []),
+                        ].filter((url, imageIndex, all) => typeof url === 'string' && url && all.indexOf(url) === imageIndex);
 
                         return (
                           <div key={idx} className="preview-question-card">
@@ -1151,9 +1158,13 @@ export default function AdminPage() {
                               </div>
                             )}
 
-                            {(q.imagem_url || q.image || (q.imagens && q.imagens[0])) && (
-                              <div className="preview-q-image-box">
-                                <img src={q.imagem_url || q.image || q.imagens[0]} alt={`Figura Questão ${idx + 1}`} onError={(e) => { e.target.style.display = 'none'; }} />
+                            {imagensQuestao.length > 0 && (
+                              <div className="preview-q-images-box">
+                                {imagensQuestao.map((url, imageIndex) => (
+                                  <figure className="preview-q-image-box" key={`${idx}-${imageIndex}`}>
+                                    <img src={url} alt={`Figura ${imageIndex + 1} da questão ${q.numero || idx + 1}`} onError={(e) => { e.target.style.display = 'none'; }} />
+                                  </figure>
+                                ))}
                               </div>
                             )}
 

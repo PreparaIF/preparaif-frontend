@@ -42,6 +42,13 @@ export async function uploadDocumento(tipo, file, metadata = {}, token = null) {
         const correctAnswerIndex = q.correctAnswerIndex ?? null;
         const textoApoio = q.supportText || q.texto_apoio || "";
         const creditos = q.credits || q.creditos || "";
+        const imageUrls = [
+          ...(Array.isArray(q.imageUrls) ? q.imageUrls : []),
+          ...(Array.isArray(q.images) ? q.images : []),
+          ...(Array.isArray(q.imagens) ? q.imagens : []),
+        ].filter((url, imageIndex, all) => typeof url === "string" && url && all.indexOf(url) === imageIndex);
+        const primaryImage = q.imageUrl || q.imagem_url || imageUrls[0] || "";
+        if (primaryImage && !imageUrls.includes(primaryImage)) imageUrls.unshift(primaryImage);
 
         return {
           ...q,
@@ -60,8 +67,11 @@ export async function uploadDocumento(tipo, file, metadata = {}, token = null) {
           texto_apoio: textoApoio,
           texto_de_apoio: textoApoio,
           supportText: textoApoio,
-          imagem_url: q.imageUrl || q.imagem_url || "",
-          imageUrl: q.imageUrl || q.imagem_url || "",
+          imagem_url: primaryImage,
+          imageUrl: primaryImage,
+          imageUrls,
+          images: imageUrls,
+          imagens: imageUrls,
           creditos,
           credits: creditos,
         };

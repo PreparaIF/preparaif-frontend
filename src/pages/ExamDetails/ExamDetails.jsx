@@ -188,6 +188,27 @@ function ExamDetails() {
         </div>
 
         <div className="question-content">
+          {currentQuestion.supportText && (
+            <section className="question-support" aria-label="Texto de apoio">
+              <span className="question-support-label">Texto de apoio</span>
+              <p>{currentQuestion.supportText}</p>
+            </section>
+          )}
+
+          {currentQuestion.imageUrls?.length > 0 && (
+            <div className="question-images" aria-label="Figuras da questão">
+              {currentQuestion.imageUrls.map((imageUrl, imageIndex) => (
+                <figure className="question-image" key={`${currentQuestion.id}-${imageIndex}`}>
+                  <img src={imageUrl} alt={`Figura ${imageIndex + 1} da questão ${currentQuestion.number}`} />
+                </figure>
+              ))}
+            </div>
+          )}
+
+          {currentQuestion.credits && (
+            <p className="question-credits">Fonte / Créditos: {currentQuestion.credits}</p>
+          )}
+
           <h2 className="question-text">{currentQuestion.text}</h2>
 
           <div className="options-list">

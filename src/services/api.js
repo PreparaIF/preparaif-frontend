@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL
+const configuredApiUrl = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL_LOCAL)
+  : import.meta.env.VITE_API_URL;
+
+const API_URL = configuredApiUrl?.replace(/\/$/, "");
 const TOKEN_KEY = "preparaif_token";
 
 export async function apiFetch(path, options = {}) {
@@ -8,7 +12,7 @@ export async function apiFetch(path, options = {}) {
 
   if (!API_URL) {
     throw new Error(
-      "VITE_API_URL não está configurada."
+      "A URL da API não está configurada para este ambiente."
     );
   } 
 
