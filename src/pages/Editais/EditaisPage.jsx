@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { fetchEditais } from '../../services/edital';
+import { useAuth } from '../../contexts/auth-context';
 import EditalCard from '../../components/Edital/EditalCard';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import LoadingSpinner from '../../components/Utils/LoadingSpinner';
@@ -8,6 +10,7 @@ import './EditaisPage.css';
 
 export default function EditaisPage() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [editais, setEditais] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,8 +65,18 @@ export default function EditaisPage() {
 
   return (
     <div className="section-page-container">
-      <div className="section-top-header">
+      <div className="section-top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <ButtonVoltar onClick={() => navigate('/')} />
+        {isAdmin && (
+          <button
+            type="button"
+            className="admin-add-element-btn"
+            onClick={() => navigate('/admin?tab=edital')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#00875F', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+          >
+            <Plus size={16} /> Adicionar Edital
+          </button>
+        )}
       </div>
 
       <div className="section-page-hero">

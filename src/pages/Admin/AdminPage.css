@@ -1735,3 +1735,464 @@
   border-radius: 999px;
   border: 1px solid #a7f3d0;
 }
+
+/* ==================== REALISTIC EXTRACTION PREVIEW ==================== */
+.preview-realistic-wrapper {
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 0 0 16px 16px;
+}
+
+.preview-realistic-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px dashed #10b981;
+  padding: 12px 18px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.notice-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #047857;
+}
+
+.notice-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.realistic-card-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Realistic Course Card */
+.realistic-course-card {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.realistic-course-card:hover, .realistic-course-card.card-expanded {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 35px -10px rgba(5, 150, 105, 0.25);
+  border-color: #059669;
+}
+
+.realistic-course-cover {
+  position: relative;
+  height: 180px;
+  width: 100%;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.realistic-course-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.realistic-course-card:hover .realistic-course-cover img {
+  transform: scale(1.04);
+}
+
+.realistic-cover-gradient {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #00875f 0%, #004d40 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.course-shift-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  color: #047857;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.realistic-course-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-institute-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.inst-icon-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #047857;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.realistic-course-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.realistic-course-submeta {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.realistic-card-action-btn {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #00875f 0%, #004d40 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.realistic-card-action-btn:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 4px 12px rgba(0, 135, 95, 0.3);
+}
+
+/* Realistic Exam Card */
+.realistic-exam-card {
+  width: 100%;
+  max-width: 380px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.realistic-exam-card:hover, .realistic-exam-card.card-expanded {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 35px -10px rgba(5, 150, 105, 0.25);
+  border-color: #059669;
+}
+
+.realistic-exam-cover {
+  background: linear-gradient(135deg, #00875f 0%, #004d40 100%);
+  padding: 24px 20px;
+  color: #ffffff;
+  text-align: center;
+  position: relative;
+}
+
+.exam-tag-pill {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.exam-cover-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+  color: #ffffff;
+}
+
+.realistic-exam-body {
+  padding: 18px 20px;
+}
+
+.realistic-exam-metas {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  justify-content: center;
+}
+
+.meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* Realistic Edital Card */
+.realistic-edital-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.realistic-edital-card:hover, .realistic-edital-card.card-expanded {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 35px -10px rgba(5, 150, 105, 0.25);
+  border-color: #059669;
+}
+
+.realistic-edital-badge-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.edital-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.edital-inst-pill {
+  font-size: 11px;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.realistic-edital-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.realistic-edital-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 16px;
+  line-height: 1.45;
+}
+
+.realistic-edital-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.edital-date-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Realistic Details Rectangle Box */
+.realistic-details-rectangle {
+  width: 100%;
+  background: #ffffff;
+  border: 2px solid #059669;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px -10px rgba(5, 150, 105, 0.2);
+  margin-top: 8px;
+  animation: detailsSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes detailsSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.details-rectangle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to right, #ecfdf5, #f0fdf4);
+  padding: 16px 24px;
+  border-bottom: 1.5px solid #a7f3d0;
+}
+
+.details-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.details-header-title h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #065f46;
+}
+
+.details-sub-hint {
+  font-size: 12px;
+  color: #047857;
+  font-weight: 500;
+}
+
+.details-close-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #a7f3d0;
+  background: #ffffff;
+  color: #047857;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.details-close-btn:hover {
+  background: #047857;
+  color: #ffffff;
+}
+
+.details-rectangle-body {
+  padding: 24px;
+}
+
+/* Exam stats bar inside details rectangle */
+.preview-exam-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.stat-lbl {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.stat-box.valid { background: #ecfdf5; border-color: #a7f3d0; }
+.stat-box.valid .stat-num { color: #047857; }
+
+.stat-box.annulled { background: #fef2f2; border-color: #fca5a5; }
+.stat-box.annulled .stat-num { color: #991b1b; }
+
+.stat-box.unknown { background: #fffbeb; border-color: #fde68a; }
+.stat-box.unknown .stat-num { color: #b45309; }
+
+/* Course detail specs grid */
+.course-detail-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.spec-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spec-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.spec-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+

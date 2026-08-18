@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { fetchCourses } from '../../services/courses';
+import { useAuth } from '../../contexts/auth-context';
 import CourseCard from '../../components/Course/CourseCard';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import LoadingSpinner from '../../components/Utils/LoadingSpinner';
@@ -8,6 +10,7 @@ import './CoursesPage.css';
 
 export default function CoursesPage() {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tipoFilter, setTipoFilter] = useState('');
@@ -46,8 +49,18 @@ export default function CoursesPage() {
 
   return (
     <div className="section-page-container">
-      <div className="section-top-header">
+      <div className="section-top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <ButtonVoltar onClick={() => navigate('/')} />
+        {isAdmin && (
+          <button
+            type="button"
+            className="admin-add-element-btn"
+            onClick={() => navigate('/admin?tab=curso')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#00875F', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+          >
+            <Plus size={16} /> Adicionar Curso
+          </button>
+        )}
       </div>
 
       <div className="section-page-hero">

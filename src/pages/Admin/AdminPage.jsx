@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import {
   FileText,
@@ -21,12 +21,15 @@ import {
   Check,
   Folder,
   Eye,
-  X
+  X,
+  Target
 } from 'lucide-react';
 import { uploadDocumento } from '../../services/upload';
 import { fetchCourses, saveCourse } from '../../services/courses';
 import { fetchEditais, saveEdital } from '../../services/edital';
 import { fetchAdminExams, saveExam } from '../../services/exams';
+import { fetchPreferences, createPreference, updatePreference, deletePreference } from '../../services/preferences';
+import IconPicker, { DynamicIcon } from '../../components/Utils/IconPicker';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './AdminPage.css';
 
@@ -74,6 +77,7 @@ export default function AdminPage() {
   const [file, setFile] = useState(null);
   const [fileGabarito, setFileGabarito] = useState(null);
   const [resultSubTab, setResultSubTab] = useState('preview'); // 'preview' | 'edicao'
+  const [previewDetailsOpen, setPreviewDetailsOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -83,19 +87,107 @@ export default function AdminPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const editIdParam = searchParams.get('editId');
+
+  useEffect(() => {
+    if (tabParam && ['prova', 'edital', 'curso', 'gerenciar'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  useEffect(() => {
+    if (!editIdParam) return;
+    const targetId = Number(editIdParam);
+    if (!targetId) return;
+
+    if ((!tabParam || tabParam === 'prova') && dbExams.length > 0) {
+      const found = dbExams.find(ex => Number(ex.id) === targetId);
+      if (found) {
+        handleEditExam(found);
+        setActiveTab('prova');
+      }
+    } else if (tabParam === 'edital' && dbEditais.length > 0) {
+      const found = dbEditais.find(ed => Number(ed.id) === targetId);
+      if (found) {
+        handleEditEdital(found);
+        setActiveTab('edital');
+      }
+    } else if (tabParam === 'curso' && dbCourses.length > 0) {
+      const found = dbCourses.find(c => Number(c.id) === targetId);
+      if (found) {
+        handleEditCourse(found);
+        setActiveTab('curso');
+      }
+    }
+  }, [editIdParam, tabParam, dbExams, dbEditais, dbCourses]);
+
+  const [dbPreferences, setDbPreferences] = useState([]);
+  const [editingPref, setEditingPref] = useState(null);
+  const [prefFormData, setPrefFormData] = useState({ label: '', category: 'AREA', icon: 'Laptop' });
+  const [savingPref, setSavingPref] = useState(false);
+
+  const handleSavePreference = async (e) => {
+    e.preventDefault();
+    if (!prefFormData.label.trim()) return;
+    setSavingPref(true);
+    try {
+      if (editingPref) {
+        await updatePreference(editingPref.id, prefFormData);
+        setMessage({ type: 'success', text: `Preferência "${prefFormData.label}" atualizada com sucesso!` });
+      } else {
+        await createPreference(prefFormData);
+        setMessage({ type: 'success', text: `Nova preferência "${prefFormData.label}" criada com sucesso!` });
+      }
+      setEditingPref(null);
+      setPrefFormData({ label: '', category: 'AREA', icon: 'Laptop' });
+      const prefs = await fetchPreferences();
+      setDbPreferences(prefs || []);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Erro ao salvar preferência.' });
+    } finally {
+      setSavingPref(false);
+    }
+  };
+
+  const handleEditPref = (pref) => {
+    setEditingPref(pref);
+    setPrefFormData({ label: pref.label, category: pref.category, icon: pref.icon });
+  };
+
+  const handleDeletePref = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta preferência de conteúdo?')) return;
+    try {
+      await deletePreference(id);
+      setMessage({ type: 'success', text: 'Preferência excluída com sucesso!' });
+      const prefs = await fetchPreferences();
+      setDbPreferences(prefs || []);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Erro ao excluir preferência.' });
+    }
+  };
+
+  const handleCancelEditPref = () => {
+    setEditingPref(null);
+    setPrefFormData({ label: '', category: 'AREA', icon: 'Laptop' });
+  };
+
   useEffect(() => {
     let isSubscribed = true;
     const loadAll = async () => {
       try {
-        const [courses, editais, exams] = await Promise.all([
+        const [courses, editais, exams, prefs] = await Promise.all([
           fetchCourses(true),
           fetchEditais(true),
           fetchAdminExams(),
+          fetchPreferences(),
         ]);
         if (isSubscribed) {
           setDbCourses(courses || []);
           setDbEditais(editais || []);
           setDbExams(exams || []);
+          setDbPreferences(prefs || []);
         }
       } catch (err) {
         console.error("Erro ao carregar dados do banco:", err);
@@ -248,6 +340,7 @@ export default function AdminPage() {
     setSavingDb(true);
     setMessage({ type: '', text: '' });
     try {
+      let savedItem = null;
       if (activeTab === 'prova' && result.questoes) {
         const examPayload = {
           title: formData.titulo_personalizado || result.title || `Prova ${formData.ano || ''} Exame ${formData.exame_num || ''}`.trim(),
@@ -267,7 +360,7 @@ export default function AdminPage() {
             answerKeyStatus: q.answerKeyStatus || (q.status === 'ANNULLED' ? 'ANNULLED' : (q.correctAnswerIndex !== null ? 'ORIGINAL' : 'UNKNOWN')),
           })),
         };
-        await saveExam(examPayload, isEditingExisting, editingId);
+        savedItem = await saveExam(examPayload, isEditingExisting, editingId);
       } else if (activeTab === 'edital' && result.edital) {
         const editalPayload = {
           title: result.edital.title || formData.titulo_personalizado || 'Edital sem título',
@@ -278,7 +371,7 @@ export default function AdminPage() {
           instituteLogo: result.edital.instituteLogo || '',
           courseId: result.edital.courses?.[0] || result.edital.courseId || null,
         };
-        await saveEdital(editalPayload, isEditingExisting, editingId);
+        savedItem = await saveEdital(editalPayload, isEditingExisting, editingId);
       } else if (activeTab === 'curso' && result.course) {
         const coursePayload = {
           title: result.course.title || formData.titulo_personalizado || 'Curso sem nome',
@@ -289,10 +382,11 @@ export default function AdminPage() {
           duration: result.course.duration || '',
           degree: result.course.degree || '',
           image: result.course.image || result.course.imagem_url || '',
+          instituteLogo: result.course.instituteLogo || result.course.logo || '',
           instituteName: formData.instituteName || 'Instituto Federal de Alagoas - Campus Arapiraca',
           editals: result.course.editals || [],
         };
-        await saveCourse(coursePayload, isEditingExisting, editingId);
+        savedItem = await saveCourse(coursePayload, isEditingExisting, editingId);
       } else {
         const metadata = {
           ano: formData.ano,
@@ -302,7 +396,13 @@ export default function AdminPage() {
           instituteName: formData.instituteName,
           salvar_banco: true,
         };
-        await uploadDocumento(activeTab, inputMode === 'pdf' ? file : null, metadata);
+        savedItem = await uploadDocumento(activeTab, inputMode === 'pdf' ? file : null, metadata);
+      }
+
+      if (savedItem && (savedItem.id || savedItem.course?.id || savedItem.edital?.id)) {
+        const targetId = savedItem.id || savedItem.course?.id || savedItem.edital?.id;
+        setIsEditingExisting(true);
+        setEditingId(targetId);
       }
 
       const [courses, editais, exams] = await Promise.all([
@@ -522,44 +622,63 @@ export default function AdminPage() {
     setActiveTab('edital');
     setIsEditingExisting(true);
     setEditingId(item.id);
+    const editalTitle = item.title || 'Edital sem título';
+    const editalLogo = item.instituteLogo || item.logo || item.image || '';
     setFormData({
       ano: '',
       exame_num: '',
       texto: '',
-      titulo_personalizado: item.title,
-      instituteName: 'Instituto Federal de Alagoas - Campus Arapiraca',
+      titulo_personalizado: editalTitle,
+      instituteName: item.instituteName || 'Instituto Federal de Alagoas - Campus Arapiraca',
     });
-    setResult({ edital: { ...item, courses: item.courseId ? [item.courseId] : [] } });
-    setMessage({ type: 'success', text: `Edital "${item.title}" carregado do banco.` });
+    setResult({
+      edital: {
+        ...item,
+        title: editalTitle,
+        instituteLogo: editalLogo,
+        courses: item.courseId ? [item.courseId] : (item.courses ? item.courses.map(c => typeof c === 'object' ? c.id : c) : [])
+      }
+    });
+    setMessage({ type: 'success', text: `Edital "${editalTitle}" carregado do banco.` });
   };
 
   const handleEditCourse = (item) => {
     setActiveTab('curso');
     setIsEditingExisting(true);
     setEditingId(item.id);
+    const courseTitle = item.title || item.course?.name || item.course?.title || '';
+    const courseDescription = item.description || item.course?.description || '';
+    const courseCampus = item.campus || item.course?.campus || '';
+    const courseShift = item.shift || item.course?.turno || item.course?.shift || '';
+    const courseModality = item.modality || item.course?.specs?.modalidade || item.course?.modality || 'Presencial';
+    const courseDuration = item.duration || item.course?.specs?.duracao || item.course?.duration || '';
+    const courseDegree = item.degree || item.course?.specs?.titulo || item.course?.degree || '';
+    const courseImage = item.image || item.imagem_url || item.course?.image || item.course?.imagem_url || '';
+
     setFormData({
       ano: '',
       exame_num: '',
       texto: '',
-      titulo_personalizado: item.course.name,
-      instituteName: item.institute?.name || 'Instituto Federal de Alagoas - Campus Arapiraca',
+      titulo_personalizado: courseTitle,
+      instituteName: item.instituteName || item.institute?.name || 'Instituto Federal de Alagoas - Campus Arapiraca',
     });
     setResult({
       course: {
         id: item.id,
-        title: item.course.name,
-        description: item.course.description,
-        campus: item.course.campus,
-        shift: item.course.turno,
-        modality: item.course.specs?.modalidade || 'Presencial',
-        duration: item.course.specs?.duracao || '4 anos',
-        degree: item.course.specs?.titulo || 'Técnico / Bacharel',
-        editals: (item.course.editals || item.course.edicts || []).map((edital) =>
+        title: courseTitle,
+        description: courseDescription,
+        campus: courseCampus,
+        shift: courseShift,
+        modality: courseModality,
+        duration: courseDuration,
+        degree: courseDegree,
+        image: courseImage,
+        editals: (item.editals || item.course?.editals || item.course?.edicts || []).map((edital) =>
           typeof edital === 'object' ? edital.id : edital
         ),
       }
     });
-    setMessage({ type: 'success', text: `Curso "${item.course.name}" carregado do banco.` });
+    setMessage({ type: 'success', text: `Curso "${courseTitle}" carregado do banco.` });
   };
 
   const activeTabInfo = TABS.find(t => t.id === activeTab) || {
@@ -657,12 +776,148 @@ export default function AdminPage() {
             </span>
             <span className="sidebar-tab-desc">Consulte e edite dados do banco</span>
           </button>
+          <button
+            className={`sidebar-tab ${activeTab === 'preferencias' ? 'active' : ''}`}
+            onClick={() => handleTabChange('preferencias')}
+          >
+            <span className="sidebar-tab-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <Target size={18} /> Preferências de Conteúdo
+            </span>
+            <span className="sidebar-tab-desc">Crie e edite opções e ícones</span>
+          </button>
         </aside>
 
         <main className="admin-main">
           {message.text && (
             <div className={`admin-alert ${message.type}`}>
               {message.type === 'success' ? <CheckCircle2 size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> : <AlertCircle size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} />} {message.text}
+            </div>
+          )}
+
+          {activeTab === 'preferencias' && (
+            <div className="admin-form-card">
+              <div className="form-card-header">
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Target size={22} color="#00875F" /> Gerenciar Preferências de Conteúdo
+                </h2>
+                <span className="form-card-hint">
+                  Adicione ou edite os temas e modalidades de ensino disponíveis para os estudantes. Escolha o ícone ideal para cada preferência.
+                </span>
+              </div>
+
+              {/* Form to Create / Edit Preference */}
+              <form onSubmit={handleSavePreference} style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '800', margin: '0 0 14px', color: '#0f172a' }}>
+                  {editingPref ? `Editar Preferência: "${editingPref.label}"` : 'Adicionar Nova Preferência'}
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label className="edit-label">Nome / Título da Preferência *:</label>
+                    <input
+                      type="text"
+                      className="edit-option-input"
+                      value={prefFormData.label}
+                      onChange={(e) => setPrefFormData({ ...prefFormData, label: e.target.value })}
+                      placeholder="Ex: Robótica & Automação"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="edit-label">Categoria *:</label>
+                    <select
+                      className="edit-option-input"
+                      value={prefFormData.category}
+                      onChange={(e) => setPrefFormData({ ...prefFormData, category: e.target.value })}
+                    >
+                      <option value="AREA">Área de Conhecimento</option>
+                      <option value="MODALIDADE">Modalidade de Ensino</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Interactive Icon Library Picker */}
+                <IconPicker
+                  selectedIcon={prefFormData.icon}
+                  onSelectIcon={(icon) => setPrefFormData({ ...prefFormData, icon })}
+                />
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+                  {editingPref && (
+                    <button
+                      type="button"
+                      className="details-close-btn"
+                      onClick={handleCancelEditPref}
+                    >
+                      Cancelar Edição
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="btn-save-db active"
+                    disabled={savingPref}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Save size={16} /> {savingPref ? 'Salvando...' : (editingPref ? 'Atualizar Preferência' : 'Criar Preferência')}
+                  </button>
+                </div>
+              </form>
+
+              {/* List of Existing Preferences */}
+              <div className="preferences-admin-list">
+                <h3 style={{ fontSize: '16px', fontWeight: '800', margin: '0 0 16px', color: '#0f172a' }}>
+                  Preferências Cadastradas ({dbPreferences.length})
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
+                  {dbPreferences.map((pref) => (
+                    <div
+                      key={pref.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '14px 16px',
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#047857', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <DynamicIcon name={pref.icon} size={20} />
+                        </div>
+                        <div>
+                          <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block' }}>{pref.label}</strong>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>
+                            {pref.category === 'AREA' ? 'Área de Conhecimento' : 'Modalidade de Ensino'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditPref(pref)}
+                          style={{ padding: '6px', background: '#e2e8f0', color: '#1e293b', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                          title="Editar preferência"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePref(pref.id)}
+                          style={{ padding: '6px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                          title="Excluir preferência"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
@@ -694,46 +949,6 @@ export default function AdminPage() {
                   >
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={18} /> Provas Cadastradas <span className="category-count">({filteredExams.length})</span></h3>
                     <span className="category-arrow">{openCategories.prova ? '▲' : '▼'}</span>
-                  </button>
-
-                  {openCategories.prova && (
-                    <div className="category-items-list">
-                      {filteredExams.length === 0 ? (
-                        <p className="empty-category-text">Nenhuma prova encontrada.</p>
-                      ) : (
-                        filteredExams.map(ex => (
-                          <div key={ex.id} className="manage-item-row">
-                            <div className="item-main-info">
-                              <span className="item-title">{ex.title}</span>
-                              <span className="item-meta">{ex.questions?.length || 0} questões cadastradas</span>
-                            </div>
-                            <button
-                              type="button"
-                              className="btn-edit-item"
-                              onClick={() => handleEditExam(ex)}
-                              title="Editar esta prova"
-                            >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                              </svg>
-                              <span>Editar</span>
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="manage-category-card">
-                  <button
-                    type="button"
-                    className={`category-header-btn ${openCategories.edital ? 'open' : ''}`}
-                    onClick={() => toggleCategory('edital')}
-                  >
-                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><ScrollText size={18} /> Editais Cadastrados <span className="category-count">({filteredEditais.length})</span></h3>
-                    <span className="category-arrow">{openCategories.edital ? '▲' : '▼'}</span>
                   </button>
 
                   {openCategories.prova && (
@@ -1171,147 +1386,367 @@ export default function AdminPage() {
               </div>
 
               {resultSubTab === 'preview' && (
-                <div className="result-preview-content">
+                <div className="preview-realistic-wrapper">
+                  <div className="preview-realistic-notice">
+                    <div className="notice-badge">
+                      <Eye size={16} /> Visão Prévia do Aluno (Interativa)
+                    </div>
+                    <p className="notice-hint">
+                      Clique no card abaixo para simular a abertura da tela de detalhes em tempo real.
+                    </p>
+                  </div>
+
+                  {/* PROVA REALISTIC PREVIEW */}
                   {result.questoes && (
-                    <div className="questions-preview-list">
-                      <div className="preview-document-header">
-                        <h3 className="preview-doc-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <FileText size={20} color="#00875F" /> {result.title || formData.titulo_personalizado || `Prova ${formData.ano || ''}`}
-                        </h3>
-                        <div className="preview-doc-meta-bar">
-                          <span className="meta-badge-green">{result.questoes.length} Questões Extraídas</span>
-                          {formData.ano && <span className="meta-badge-gray">Ano: {formData.ano}</span>}
-                          {formData.exame_num && <span className="meta-badge-gray">Exame: {formData.exame_num}</span>}
+                    <div className="realistic-card-container">
+                      <div
+                        className={`realistic-exam-card ${previewDetailsOpen ? 'card-expanded' : ''}`}
+                        onClick={() => setPreviewDetailsOpen(!previewDetailsOpen)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="realistic-exam-cover">
+                          <span className="exam-tag-pill">{formData.ano || result.year || '2025'}</span>
+                          <h3 className="exam-cover-title">
+                            {result.title || formData.titulo_personalizado || `PROVA IFAL ${formData.ano || '2025'}`}
+                          </h3>
+                        </div>
+                        <div className="realistic-exam-body">
+                          <div className="realistic-exam-metas">
+                            <span className="meta-pill"><GraduationCap size={14} /> {formData.exame_num ? `Tipo ${formData.exame_num}` : 'Processo Seletivo'}</span>
+                            <span className="meta-pill"><FileText size={14} /> {result.questoes.length} Questões</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="realistic-card-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewDetailsOpen(!previewDetailsOpen);
+                            }}
+                          >
+                            <Eye size={16} />
+                            {previewDetailsOpen ? 'Recolher Detalhes da Prova' : 'Ver Detalhes da Prova (Simular Aluno)'}
+                          </button>
                         </div>
                       </div>
 
-                      {result.questoes.map((q, idx) => {
-                        const isAnnulled = q.status === 'ANNULLED' || q.answerKeyStatus === 'ANNULLED';
-                        const isUnknown = !isAnnulled && (q.correctAnswerIndex === null || q.correctAnswerIndex === undefined || q.status === 'UNKNOWN');
-                        const isChanged = q.answerKeyStatus === 'CHANGED';
+                      {previewDetailsOpen && (
+                        <div className="realistic-details-rectangle animate-slide-down">
+                          <div className="details-rectangle-header">
+                            <div className="details-header-title">
+                              <FileText size={20} color="#00875F" />
+                              <div>
+                                <h4>Detalhes da Prova — Visão do Estudante</h4>
+                                <span className="details-sub-hint">Simulação de gabarito, enunciado, suporte e alternativas</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="details-close-btn"
+                              onClick={() => setPreviewDetailsOpen(false)}
+                            >
+                              <X size={16} /> Recolher
+                            </button>
+                          </div>
 
-                        const correctOptIndex = (q.correctAnswerIndex !== undefined && q.correctAnswerIndex !== null) ? q.correctAnswerIndex : null;
-
-                        let gabaritoBadgeText = '';
-                        let gabaritoBadgeClass = 'preview-gabarito-tag';
-
-                        if (isAnnulled) {
-                          gabaritoBadgeText = 'Questão anulada';
-                          gabaritoBadgeClass = 'preview-gabarito-tag is-annulled';
-                        } else if (isUnknown) {
-                          gabaritoBadgeText = 'Gabarito não identificado';
-                          gabaritoBadgeClass = 'preview-gabarito-tag is-unknown';
-                        } else {
-                          const optChar = q.answerKey || (Number.isInteger(correctOptIndex) ? String.fromCharCode(65 + correctOptIndex) : (q.gabarito_letra || '?'));
-                          gabaritoBadgeText = `Gabarito: Alternativa ${optChar}${isChanged ? ' (Alterado após recurso)' : ''}`;
-                          gabaritoBadgeClass = 'preview-gabarito-tag is-valid';
-                        }
-
-                        const opts = (q.options && q.options.length > 0)
-                          ? q.options
-                          : (q.opcoes && q.opcoes.length > 0)
-                          ? q.opcoes
-                          : ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
-                        const textoEnunciado = q.text || q.enunciado || 'Sem enunciado';
-                        const imagensQuestao = [
-                          ...(Array.isArray(q.imageUrls) ? q.imageUrls : []),
-                          ...(Array.isArray(q.images) ? q.images : []),
-                          ...(Array.isArray(q.imagens) ? q.imagens : []),
-                          ...(q.imagem_url || q.imageUrl || q.image ? [q.imagem_url || q.imageUrl || q.image] : []),
-                        ].filter((url, imageIndex, all) => typeof url === 'string' && url && all.indexOf(url) === imageIndex);
-
-                        return (
-                          <div key={idx} className="preview-question-card">
-                            <div className="preview-q-header">
-                              <span className="preview-q-number">Questão {q.numero || idx + 1}</span>
-                              <span className={gabaritoBadgeClass}>
-                                {gabaritoBadgeText}
-                              </span>
+                          <div className="details-rectangle-body">
+                            <div className="preview-exam-stats-bar">
+                              <div className="stat-box">
+                                <span className="stat-num">{result.questoes.length}</span>
+                                <span className="stat-lbl">Total de Questões</span>
+                              </div>
+                              <div className="stat-box valid">
+                                <span className="stat-num">{result.questoes.filter(q => q.status === 'VALID' || (q.correctAnswerIndex !== null && q.status !== 'ANNULLED')).length}</span>
+                                <span className="stat-lbl">Válidas</span>
+                              </div>
+                              <div className="stat-box annulled">
+                                <span className="stat-num">{result.questoes.filter(q => q.status === 'ANNULLED' || q.answerKeyStatus === 'ANNULLED').length}</span>
+                                <span className="stat-lbl">Anuladas</span>
+                              </div>
+                              <div className="stat-box unknown">
+                                <span className="stat-num">{result.questoes.filter(q => (q.status === 'UNKNOWN' || q.correctAnswerIndex === null) && q.status !== 'ANNULLED').length}</span>
+                                <span className="stat-lbl">Gabarito Pendente</span>
+                              </div>
                             </div>
 
-                            {(q.texto_apoio || q.texto_de_apoio || q.text_apoio) && (
-                              <div className="preview-support-text">
-                                <span className="support-badge">Texto de Apoio</span>
-                                <div className="preview-support-body">
-                                  {(q.texto_apoio || q.texto_de_apoio || q.text_apoio)
-                                    .split('\n\n')
-                                    .map((p, pIdx) => (
-                                      <p key={pIdx}>{p}</p>
-                                    ))}
-                                </div>
-                              </div>
-                            )}
+                            <div className="questions-preview-list">
+                              {result.questoes.map((q, idx) => {
+                                const isAnnulled = q.status === 'ANNULLED' || q.answerKeyStatus === 'ANNULLED';
+                                const isUnknown = !isAnnulled && (q.correctAnswerIndex === null || q.correctAnswerIndex === undefined || q.status === 'UNKNOWN');
+                                const isChanged = q.answerKeyStatus === 'CHANGED';
 
-                            {imagensQuestao.length > 0 && (
-                              <div className="preview-q-images-box">
-                                {imagensQuestao.map((url, imageIndex) => (
-                                  <figure className="preview-q-image-box" key={`${idx}-${imageIndex}`}>
-                                    <img src={url} alt={`Figura ${imageIndex + 1} da questão ${q.numero || idx + 1}`} onError={(e) => { e.target.style.display = 'none'; }} />
-                                  </figure>
-                                ))}
-                              </div>
-                            )}
+                                const correctOptIndex = (q.correctAnswerIndex !== undefined && q.correctAnswerIndex !== null) ? q.correctAnswerIndex : null;
 
-                            {(q.creditos || q.source) && (
-                              <div className="preview-credits-box">
-                                <span className="preview-q-credits">Fonte / Créditos: {q.creditos || q.source}</span>
-                              </div>
-                            )}
+                                let gabaritoBadgeText = '';
+                                let gabaritoBadgeClass = 'preview-gabarito-tag';
 
-                            <p className="preview-q-text">{textoEnunciado}</p>
+                                if (isAnnulled) {
+                                  gabaritoBadgeText = 'Questão anulada';
+                                  gabaritoBadgeClass = 'preview-gabarito-tag is-annulled';
+                                } else if (isUnknown) {
+                                  gabaritoBadgeText = 'Gabarito não identificado';
+                                  gabaritoBadgeClass = 'preview-gabarito-tag is-unknown';
+                                } else {
+                                  const optChar = q.answerKey || (Number.isInteger(correctOptIndex) ? String.fromCharCode(65 + correctOptIndex) : (q.gabarito_letra || '?'));
+                                  gabaritoBadgeText = `Gabarito: Alternativa ${optChar}${isChanged ? ' (Alterado após recurso)' : ''}`;
+                                  gabaritoBadgeClass = 'preview-gabarito-tag is-valid';
+                                }
 
-                            <div className="preview-options-list">
-                              {opts.map((opt, oIdx) => {
-                                const isCorrect = !isAnnulled && !isUnknown && oIdx === correctOptIndex;
-                                const letter = String.fromCharCode(65 + oIdx);
+                                const opts = (q.options && q.options.length > 0)
+                                  ? q.options
+                                  : (q.opcoes && q.opcoes.length > 0)
+                                  ? q.opcoes
+                                  : ['Opção A', 'Opção B', 'Opção C', 'Opção D'];
+                                const textoEnunciado = q.text || q.enunciado || 'Sem enunciado';
+                                const imagensQuestao = [
+                                  ...(Array.isArray(q.imageUrls) ? q.imageUrls : []),
+                                  ...(Array.isArray(q.images) ? q.images : []),
+                                  ...(Array.isArray(q.imagens) ? q.imagens : []),
+                                  ...(q.imagem_url || q.imageUrl || q.image ? [q.imagem_url || q.imageUrl || q.image] : []),
+                                ].filter((url, imageIndex, all) => typeof url === 'string' && url && all.indexOf(url) === imageIndex);
+
                                 return (
-                                  <div key={oIdx} className={`preview-option-item ${isCorrect ? 'correct' : ''}`}>
-                                    <span className="preview-opt-letter">{letter}</span>
-                                    <span className="preview-opt-text">{opt}</span>
-                                    {isCorrect && <span className="preview-opt-check"><Check size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Resposta Correta</span>}
+                                  <div key={idx} className="preview-question-card">
+                                    <div className="preview-q-header">
+                                      <span className="preview-q-number">Questão {q.numero || idx + 1}</span>
+                                      <span className={gabaritoBadgeClass}>
+                                        {gabaritoBadgeText}
+                                      </span>
+                                    </div>
+
+                                    {(q.texto_apoio || q.texto_de_apoio || q.text_apoio) && (
+                                      <div className="preview-support-text">
+                                        <span className="support-badge">Texto de Apoio</span>
+                                        <div className="preview-support-body">
+                                          {(q.texto_apoio || q.texto_de_apoio || q.text_apoio)
+                                            .split('\n\n')
+                                            .map((p, pIdx) => (
+                                              <p key={pIdx}>{p}</p>
+                                            ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {imagensQuestao.length > 0 && (
+                                      <div className="preview-q-images-box">
+                                        {imagensQuestao.map((url, imageIndex) => (
+                                          <figure className="preview-q-image-box" key={`${idx}-${imageIndex}`}>
+                                            <img src={url} alt={`Figura ${imageIndex + 1} da questão ${q.numero || idx + 1}`} onError={(e) => { e.target.style.display = 'none'; }} />
+                                          </figure>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {(q.creditos || q.source) && (
+                                      <div className="preview-credits-box">
+                                        <span className="preview-q-credits">Fonte / Créditos: {q.creditos || q.source}</span>
+                                      </div>
+                                    )}
+
+                                    <p className="preview-q-text">{textoEnunciado}</p>
+
+                                    <div className="preview-options-list">
+                                      {opts.map((opt, oIdx) => {
+                                        const isCorrect = !isAnnulled && !isUnknown && oIdx === correctOptIndex;
+                                        const letter = String.fromCharCode(65 + oIdx);
+                                        return (
+                                          <div key={oIdx} className={`preview-option-item ${isCorrect ? 'correct' : ''}`}>
+                                            <span className="preview-opt-letter">{letter}</span>
+                                            <span className="preview-opt-text">{opt}</span>
+                                            {isCorrect && <span className="preview-opt-check"><Check size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Resposta Correta</span>}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
                                   </div>
                                 );
                               })}
                             </div>
                           </div>
-                        );
-                      })}
+                        </div>
+                      )}
                     </div>
                   )}
 
+                  {/* EDITAL REALISTIC PREVIEW */}
                   {result.edital && (
-                    <div className="preview-edital-card">
-                      <h3 className="preview-doc-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><ScrollText size={20} color="#00875F" /> {result.edital.title || 'Edital Extraído'}</h3>
-                      <p className="preview-doc-description">{result.edital.description}</p>
-                      {result.edital.content && (
-                        <div className="preview-edital-content">
-                          <h4>Conteúdo Detalhado</h4>
-                          <div
-                            className="edict-html-content"
-                            style={{ lineHeight: '1.6', marginTop: '12px' }}
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.edital.content) }}
-                          />
+                    <div className="realistic-card-container">
+                      <div
+                        className={`realistic-edital-card ${previewDetailsOpen ? 'card-expanded' : ''}`}
+                        onClick={() => setPreviewDetailsOpen(!previewDetailsOpen)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="realistic-edital-badge-bar">
+                          <span className="edital-pill"><ScrollText size={14} /> Avisos e Editais</span>
+                          <span className="edital-inst-pill">{result.edital.instituteName || formData.instituteName || 'IFAL'}</span>
+                        </div>
+                        <h3 className="realistic-edital-title">
+                          {result.edital.title || formData.titulo_personalizado || 'Edital de Processo Seletivo IFAL'}
+                        </h3>
+                        <p className="realistic-edital-desc">
+                          {result.edital.description || 'Publicação de edital oficial para seleção de candidatos.'}
+                        </p>
+                        <div className="realistic-edital-footer">
+                          <span className="edital-date-meta">Postado recentemente</span>
+                          <button
+                            type="button"
+                            className="realistic-card-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewDetailsOpen(!previewDetailsOpen);
+                            }}
+                          >
+                            <Eye size={16} />
+                            {previewDetailsOpen ? 'Recolher Edital' : 'Ver Edital Completo (Simular Aluno)'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {previewDetailsOpen && (
+                        <div className="realistic-details-rectangle animate-slide-down">
+                          <div className="details-rectangle-header">
+                            <div className="details-header-title">
+                              <ScrollText size={20} color="#00875F" />
+                              <div>
+                                <h4>Página de Detalhes do Edital — Visão do Estudante</h4>
+                                <span className="details-sub-hint">{result.edital.title}</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="details-close-btn"
+                              onClick={() => setPreviewDetailsOpen(false)}
+                            >
+                              <X size={16} /> Recolher
+                            </button>
+                          </div>
+
+                          <div className="details-rectangle-body">
+                            <div className="edital-detail-banner">
+                              <h2 style={{ fontSize: '20px', color: '#111827', margin: '0 0 8px' }}>{result.edital.title}</h2>
+                              <p style={{ color: '#4b5563', fontSize: '14px', margin: '0 0 16px' }}>{result.edital.description}</p>
+                            </div>
+
+                            {result.edital.content && (
+                              <div className="edital-detail-content-box" style={{ background: '#fafafa', padding: '16px', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
+                                <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: '#111827' }}>Regras e Conteúdo Completo:</h4>
+                                <div
+                                  className="edict-html-content"
+                                  style={{ lineHeight: '1.6', fontSize: '14px' }}
+                                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.edital.content) }}
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
                   )}
 
+                  {/* COURSE REALISTIC PREVIEW */}
                   {result.course && (
-                    <div className="preview-course-card">
-                      <h3 className="preview-doc-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><GraduationCap size={20} color="#00875F" /> {result.course.title || 'Curso Extraído'}</h3>
-                      {(result.course.image || result.course.imagem_url) && (
-                        <div className="preview-course-image-box" style={{ margin: '12px 0', borderRadius: '12px', overflow: 'hidden', maxHeight: '240px' }}>
-                          <img src={result.course.image || result.course.imagem_url} alt={result.course.title} style={{ width: '100%', maxHeight: '240px', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                    <div className="realistic-card-container">
+                      <div
+                        className={`realistic-course-card ${previewDetailsOpen ? 'card-expanded' : ''}`}
+                        onClick={() => setPreviewDetailsOpen(!previewDetailsOpen)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="realistic-course-cover">
+                          {(result.course.image || result.course.imagem_url) ? (
+                            <img src={result.course.image || result.course.imagem_url} alt={result.course.title} onError={(e) => { e.target.style.display = 'none'; }} />
+                          ) : (
+                            <div className="realistic-cover-gradient">
+                              <GraduationCap size={48} color="rgba(255,255,255,0.4)" />
+                            </div>
+                          )}
+                          <span className="course-shift-pill">{result.course.shift || 'DIURNO'}</span>
+                        </div>
+
+                        <div className="realistic-course-body">
+                          <div className="course-institute-meta">
+                            {(result.course.instituteLogo || result.course.logo) ? (
+                              <img src={result.course.instituteLogo || result.course.logo} alt="Logo Instituto" style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                            ) : (
+                              <div className="inst-icon-avatar">IF</div>
+                            )}
+                            <span>{formData.instituteName || 'Instituto Federal de Alagoas - Campus Arapiraca'}</span>
+                          </div>
+                          <h3 className="realistic-course-title">
+                            {result.course.title || formData.titulo_personalizado || 'Técnico em Informática'}
+                          </h3>
+                          <p className="realistic-course-submeta">Informações públicas no site da instituição</p>
+
+                          <button
+                            type="button"
+                            className="realistic-card-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewDetailsOpen(!previewDetailsOpen);
+                            }}
+                          >
+                            <Eye size={16} />
+                            {previewDetailsOpen ? 'Recolher Curso' : 'Ver Curso (Simular Aluno)'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {previewDetailsOpen && (
+                        <div className="realistic-details-rectangle animate-slide-down">
+                          <div className="details-rectangle-header">
+                            <div className="details-header-title">
+                              <GraduationCap size={20} color="#00875F" />
+                              <div>
+                                <h4>Página de Detalhes do Curso — Visão do Estudante</h4>
+                                <span className="details-sub-hint">{result.course.title}</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="details-close-btn"
+                              onClick={() => setPreviewDetailsOpen(false)}
+                            >
+                              <X size={16} /> Recolher
+                            </button>
+                          </div>
+
+                          <div className="details-rectangle-body">
+                            <div className="course-detail-header-card">
+                              {(result.course.image || result.course.imagem_url) && (
+                                <div className="course-detail-hero-image" style={{ width: '100%', maxHeight: '220px', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px' }}>
+                                  <img src={result.course.image || result.course.imagem_url} alt={result.course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                                </div>
+                              )}
+                              <h2 style={{ fontSize: '20px', color: '#111827', margin: '0 0 8px' }}>{result.course.title}</h2>
+                              <p className="course-detail-desc" style={{ color: '#4b5563', fontSize: '14px', margin: '0 0 16px', lineHeight: '1.5' }}>{result.course.description}</p>
+                              
+                              <div className="course-detail-specs-grid">
+                                <div className="spec-card">
+                                  <span className="spec-label">Campus</span>
+                                  <span className="spec-val">{result.course.campus || 'Arapiraca'}</span>
+                                </div>
+                                <div className="spec-card">
+                                  <span className="spec-label">Turno</span>
+                                  <span className="spec-val">{result.course.shift || 'Diurno'}</span>
+                                </div>
+                                <div className="spec-card">
+                                  <span className="spec-label">Modalidade</span>
+                                  <span className="spec-val">{result.course.modality || 'Presencial'}</span>
+                                </div>
+                                <div className="spec-card">
+                                  <span className="spec-label">Duração</span>
+                                  <span className="spec-val">{result.course.duration || '3 anos'}</span>
+                                </div>
+                                <div className="spec-card">
+                                  <span className="spec-label">Título Concedido</span>
+                                  <span className="spec-val">{result.course.degree || 'Técnico'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
-                      <p className="preview-doc-description">{result.course.description}</p>
-                      <div className="preview-course-grid">
-                        <div><strong>Campus:</strong> {result.course.campus || 'N/A'}</div>
-                        <div><strong>Turno:</strong> {result.course.shift || 'N/A'}</div>
-                        <div><strong>Modalidade:</strong> {result.course.modality || 'N/A'}</div>
-                        <div><strong>Duração:</strong> {result.course.duration || 'N/A'}</div>
-                        <div><strong>Título:</strong> {result.course.degree || 'N/A'}</div>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -1650,6 +2085,42 @@ export default function AdminPage() {
                         {(result.course.image || result.course.imagem_url) && (
                           <div style={{ marginTop: '8px', maxWidth: '220px', maxHeight: '120px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
                             <img src={result.course.image || result.course.imagem_url} alt="Preview Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="edit-q-block" style={{ marginTop: '12px' }}>
+                        <label className="edit-label">Logo / Imagem do Instituto (Upload ou URL):</label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '6px 12px', background: '#00875F', color: '#fff', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Camera size={14} /> Enviar Logo do Instituto
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleImageFileUpload(e, (url) => updateCourseField('instituteLogo', url))}
+                            />
+                          </label>
+                          <input
+                            type="text"
+                            className="edit-option-input"
+                            style={{ flex: 1, minWidth: '160px' }}
+                            value={result.course.instituteLogo || result.course.logo || ''}
+                            onChange={e => updateCourseField('instituteLogo', e.target.value)}
+                            placeholder="https://exemplo.com/logo-instituto.png"
+                          />
+                          {(result.course.instituteLogo || result.course.logo) && (
+                            <button
+                              type="button"
+                              onClick={() => updateCourseField('instituteLogo', '')}
+                              style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                        {(result.course.instituteLogo || result.course.logo) && (
+                          <div style={{ marginTop: '8px', maxWidth: '140px', maxHeight: '70px', borderRadius: '8px', overflow: 'hidden', padding: '4px', background: '#fff', border: '1px solid #ddd' }}>
+                            <img src={result.course.instituteLogo || result.course.logo} alt="Preview Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; }} />
                           </div>
                         )}
                       </div>

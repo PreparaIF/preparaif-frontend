@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
@@ -21,6 +21,8 @@ import {
   Database
 } from 'lucide-react';
 import { useAuth } from '../../contexts/auth-context';
+import { fetchPreferences } from '../../services/preferences';
+import { DynamicIcon } from '../../components/Utils/IconPicker';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './ProfilePage.css';
 
@@ -35,21 +37,15 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState(user?.phone || '');
   const [campus, setCampus] = useState(user?.campus || 'Maceió');
 
-  const [preferredAreas, setPreferredAreas] = useState(user?.preferences?.areas || {
-    tecnologia: true,
-    exatas: false,
-    biologicas: false,
-    gestao: true,
-  });
-
-  const [preferredModalities, setPreferredModalities] = useState(user?.preferences?.modalities || {
-    tecnico: true,
-    bacharelado: false,
-    licenciatura: false,
-    tecnologo: true,
-  });
-
+  const [dbPreferences, setDbPreferences] = useState([]);
+  const [selectedPrefIds, setSelectedPrefIds] = useState(user?.preferences?.selectedIds || [1, 4, 5, 8]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchPreferences()
+      .then((data) => setDbPreferences(data || []))
+      .catch((err) => console.error("Erro ao buscar preferências:", err));
+  }, []);
 
   if (!user) {
     return (
@@ -78,8 +74,7 @@ export default function ProfilePage() {
         phone,
         campus,
         preferences: {
-          areas: preferredAreas,
-          modalities: preferredModalities,
+          selectedIds: selectedPrefIds,
         },
       });
     } catch {
@@ -88,12 +83,12 @@ export default function ProfilePage() {
     }
   };
 
-  const toggleArea = (key) => {
-    setPreferredAreas((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const toggleModality = (key) => {
-    setPreferredModalities((prev) => ({ ...prev, [key]: !prev[key] }));
+  const togglePref = (prefId) => {
+    setSelectedPrefIds((prev) =>
+      prev.includes(prefId)
+        ? prev.filter((id) => id !== prefId)
+        : [...prev, prefId]
+    );
   };
 
   const handleFileUpload = (e, setTarget) => {
@@ -282,82 +277,65 @@ export default function ProfilePage() {
               <p className="form-hint">Selecione os temas que você mais busca no Prepara IF:</p>
 
               <div className="preferences-grid">
-                <label className={`pref-chip ${preferredAreas.tecnologia ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredAreas.tecnologia}
-                    onChange={() => toggleArea('tecnologia')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Laptop size={16} /> Tecnologia & Informática</span>
-                </label>
-
-                <label className={`pref-chip ${preferredAreas.exatas ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredAreas.exatas}
-                    onChange={() => toggleArea('exatas')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Ruler size={16} /> Engenharia & Exatas</span>
-                </label>
-
-                <label className={`pref-chip ${preferredAreas.biologicas ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredAreas.biologicas}
-                    onChange={() => toggleArea('biologicas')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Dna size={16} /> Ciências Biológicas & Saúde</span>
-                </label>
-
-                <label className={`pref-chip ${preferredAreas.gestao ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredAreas.gestao}
-                    onChange={() => toggleArea('gestao')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><BarChart3 size={16} /> Gestão & Negócios</span>
-                </label>
+                {dbPreferences.filter(p => p.category === 'AREA').map((pref) => {
+                  const isSelected = selectedPrefIds.includes(pref.id);
+                  return (
+                    <label key={pref.id} className={`pref-chip ${isSelected ? 'selected' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => togglePref(pref.id)}
+                      />
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <DynamicIcon name={pref.icon} size={16} /> {pref.label}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
 
               <h3 style={{ marginTop: '28px' }}>Modalidades de Ensino Preferidas</h3>
 
               <div className="preferences-grid">
-                <label className={`pref-chip ${preferredModalities.tecnico ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredModalities.tecnico}
-                    onChange={() => toggleModality('tecnico')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Wrench size={16} /> Ensino Técnico</span>
-                </label>
-
-                <label className={`pref-chip ${preferredModalities.bacharelado ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredModalities.bacharelado}
-                    onChange={() => toggleModality('bacharelado')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><GraduationCap size={16} /> Bacharelado</span>
-                </label>
-
-                <label className={`pref-chip ${preferredModalities.licenciatura ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredModalities.licenciatura}
-                    onChange={() => toggleModality('licenciatura')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><BookOpen size={16} /> Licenciatura</span>
-                </label>
-
-                <label className={`pref-chip ${preferredModalities.tecnologo ? 'selected' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={preferredModalities.tecnologo}
-                    onChange={() => toggleModality('tecnologo')}
-                  />
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Settings size={16} /> Tecnólogo</span>
-                </label>
+                {dbPreferences.filter(p => p.category === 'MODALIDADE').map((pref) => {
+                  const isSelected = selectedPrefIds.includes(pref.id);
+                  return (
+                    <label key={pref.id} className={`pref-chip ${isSelected ? 'selected' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => togglePref(pref.id)}
+                      />
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <DynamicIcon name={pref.icon} size={16} /> {pref.label}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
+
+              {dbPreferences.filter(p => p.category !== 'AREA' && p.category !== 'MODALIDADE').length > 0 && (
+                <>
+                  <h3 style={{ marginTop: '28px' }}>Outras Preferências Cadastradas</h3>
+                  <div className="preferences-grid">
+                    {dbPreferences.filter(p => p.category !== 'AREA' && p.category !== 'MODALIDADE').map((pref) => {
+                      const isSelected = selectedPrefIds.includes(pref.id);
+                      return (
+                        <label key={pref.id} className={`pref-chip ${isSelected ? 'selected' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => togglePref(pref.id)}
+                          />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <DynamicIcon name={pref.icon} size={16} /> {pref.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
 
               <div className="profile-form-actions" style={{ marginTop: '32px' }}>
                 <button type="submit" className="btn-save-profile" disabled={saving} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>

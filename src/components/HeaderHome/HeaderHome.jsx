@@ -1,14 +1,17 @@
-import { Crown } from "lucide-react";
+import { Crown, ShieldCheck } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/auth-context";
 import "./HeaderHome.css";
 
 export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, userEvolution, openAuthModal, isAdmin, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  const isAdminMode = isAdmin || location.pathname.startsWith('/admin') || activeView === 'admin';
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -168,6 +171,20 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                     </div>
                   </div>
 
+                  {isAdmin && (
+                    <button
+                      className="nav-dropdown-item"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        navigate("/admin");
+                      }}
+                      style={{ color: '#00875F', fontWeight: 'bold' }}
+                    >
+                      <ShieldCheck size={16} color="#00875F" />
+                      <span>Painel do Administrador</span>
+                    </button>
+                  )}
+
                   <div className="nav-dropdown-divider" />
 
                   <button
@@ -202,10 +219,24 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
 
       <div className="hero-banner">
         <p className="hero-subtitle">
-          A NOSSA FERRAMENTA NÃO TEM FINS LUCRATIVOS
+          {isAdminMode ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <ShieldCheck size={14} color="#00875F" style={{ verticalAlign: 'middle' }} /> MODO ADMINISTRADOR DO SISTEMA
+            </span>
+          ) : (
+            'A NOSSA FERRAMENTA NÃO TEM FINS LUCRATIVOS'
+          )}
         </p>
         <h1 className="hero-title">
-          Seja Bem-vindo ao único <span className="highlight-green">site institucional</span> que vai levar ao <span className="highlight-green">mais próximo</span> <br /> da sua aprovação!
+          {isAdminMode ? (
+            <>
+              <span className="highlight-green">Painel de Controle</span> e <span className="highlight-green">Extração de Documentos</span> do IFAL
+            </>
+          ) : (
+            <>
+              Seja Bem-vindo ao único <span className="highlight-green">site institucional</span> que vai levar ao <span className="highlight-green">mais próximo</span> <br /> da sua aprovação!
+            </>
+          )}
         </h1>
       </div>
       <div className="search-container">

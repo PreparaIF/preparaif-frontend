@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { fetchCourses } from "../../services/courses";
+import { useAuth } from "../../contexts/auth-context";
 import CourseCard from "./CourseCard";
 import LoadingSpinner from "../Utils/LoadingSpinner";
 import { matchCourse } from "../../utils/searchUtils";
@@ -8,6 +11,8 @@ import "./CourseStyle.css";
 const PAGE_SIZE = 6;
 
 export default function CoursesList({ searchTerm = "" }) {
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [turnoFilter, setTurnoFilter] = useState("");
@@ -60,8 +65,18 @@ export default function CoursesList({ searchTerm = "" }) {
 
   return (
     <section className="courses-section">
-      <div className="courses-section-header">
+      <div className="courses-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 className="courses-section-title">Cursos Disponíveis</h2>
+        {isAdmin && (
+          <button
+            type="button"
+            className="admin-add-element-btn"
+            onClick={() => navigate('/admin?tab=curso')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#00875F', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+          >
+            <Plus size={16} /> Adicionar Curso
+          </button>
+        )}
       </div>
       <>
         <div className="courses-filters">

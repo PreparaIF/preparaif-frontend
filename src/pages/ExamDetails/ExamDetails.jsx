@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Edit } from "lucide-react";
 import { fetchExamById } from "../../services/exams";
 import { useAuth } from "../../contexts/auth-context";
 import { ButtonVoltar } from "../../components";
@@ -8,7 +9,7 @@ import "./ExamDetails.css";
 function ExamDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, openAuthModal, recordAttempt } = useAuth();
+  const { user, openAuthModal, recordAttempt, isAdmin } = useAuth();
 
   const [examData, setExamData] = useState(null);
   const [loadingExam, setLoadingExam] = useState(true);
@@ -126,8 +127,18 @@ function ExamDetails() {
   if (screenState === "intro") {
     return (
       <div className="exam-page-container">
-        <div className="exam-header">
+        <div className="exam-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <ButtonVoltar />
+          {isAdmin && (
+            <button
+              type="button"
+              className="admin-edit-element-btn"
+              onClick={() => navigate(`/admin?tab=prova&editId=${id}`)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#00875F', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+            >
+              <Edit size={16} /> Editar Esta Prova
+            </button>
+          )}
         </div>
         <div className="intro-content">
           <h1 className="intro-title">
