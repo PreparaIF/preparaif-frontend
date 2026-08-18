@@ -9,7 +9,11 @@ function mapEdital(e) {
     description: e.description || "",
     content: e.content || "",
     time: e.time || "Avisos e Editais",
-    courses: e.courses || [],
+    instituteName: e.instituteName || "IFAL",
+    instituteLogo: e.instituteLogo || "",
+    courseId: e.courseId || null,
+    course: e.course || null,
+    courses: e.courseId ? [e.courseId] : [],
   };
 }
 

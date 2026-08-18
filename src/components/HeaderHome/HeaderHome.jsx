@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/auth-context";
 import "./HeaderHome.css";
 
 export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
@@ -124,6 +124,13 @@ export default function HeaderHome({ searchTerm, onSearchChange, activeView }) {
                     title="Clique para ver e editar seu perfil"
                     role="button"
                     tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setMenuOpen(false);
+                        navigate("/perfil");
+                      }
+                    }}
                   >
                     <div className="user-avatar-circle">
                       {user.avatar ? (

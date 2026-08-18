@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { apiLogin, apiRegister, apiMe, apiUpdateProfile } from "../services/auth";
 import { apiGetMyAttempts, apiSaveAttempt, calculateUserEvolution } from "../services/attempts";
 import AuthModal from "../components/AuthModal/AuthModal";
 import ToastNotification from "../components/Utils/ToastNotification";
+import { AuthContext } from "./auth-context";
 
-const AuthContext = createContext(null);
 const STORAGE_KEY = "preparaif_token";
 
 export function AuthProvider({ children }) {
@@ -18,13 +18,17 @@ export function AuthProvider({ children }) {
 
   // Toast notification state
   const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
 
   const showToast = useCallback((toastData) => {
+    window.clearTimeout(toastTimerRef.current);
     setToast(toastData);
-    setTimeout(() => {
+    toastTimerRef.current = window.setTimeout(() => {
       setToast(null);
     }, 4500);
   }, []);
+
+  useEffect(() => () => window.clearTimeout(toastTimerRef.current), []);
 
   // User attempts & evolution
   const [userAttempts, setUserAttempts] = useState([]);
@@ -43,7 +47,7 @@ export function AuthProvider({ children }) {
     async function loadAttempts() {
       if (user && token) {
         try {
-          const attempts = await apiGetMyAttempts(token, user.id);
+          const attempts = await apiGetMyAttempts(token);
           setUserAttempts(attempts || []);
         } catch (err) {
           console.error("Erro ao carregar tentativas:", err);
@@ -115,13 +119,10 @@ export function AuthProvider({ children }) {
 
   const recordAttempt = useCallback(
     async (attemptData) => {
-      if (!user) return;
-      try {
-        const saved = await apiSaveAttempt(token, attemptData, user.id);
-        setUserAttempts((prev) => [...prev, saved || attemptData]);
-      } catch (err) {
-        setUserAttempts((prev) => [...prev, attemptData]);
-      }
+      if (!user) throw new Error("Faça login antes de finalizar a prova.");
+      const saved = await apiSaveAttempt(token, attemptData);
+      setUserAttempts((prev) => [saved, ...prev]);
+      return saved;
     },
     [token, user]
   );
@@ -143,12 +144,13 @@ export function AuthProvider({ children }) {
         title: "Erro ao Salvar",
         message: "Não foi possível atualizar suas informações. Tente novamente.",
       });
+      throw err;
     }
   }, [token, showToast]);
 
   const userEvolution = calculateUserEvolution(userAttempts);
-  const isAdmin = user?.role === "ADMIN" || (user?.email && user.email.toLowerCase().includes("admin"));
-  const isStudent = !isAdmin;
+  const isAdmin = user?.role === "ADMIN";
+  const isStudent = user?.role === "STUDENT";
 
   return (
     <AuthContext.Provider
@@ -175,14 +177,10 @@ export function AuthProvider({ children }) {
       {!loading && (
         <>
           {children}
-          <AuthModal />
+          <AuthModal key={`${authModalMode}-${isAuthModalOpen}`} />
           <ToastNotification toast={toast} onClose={() => setToast(null)} />
         </>
       )}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

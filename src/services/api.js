@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "https://preparaif-api.onrender.com/api";
+const API_URL = import.meta.env.VITE_API_URL
 const TOKEN_KEY = "preparaif_token";
 
 export async function apiFetch(path, options = {}) {
@@ -39,7 +39,8 @@ export async function apiFetch(path, options = {}) {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || err.detail || err.message || `Erro HTTP ${response.status}`);
+    const message = typeof err.error === "object" ? err.error?.message : err.error;
+    throw new Error(message || err.detail || err.message || `Erro HTTP ${response.status}`);
   }
 
   if (response.status === 204) {

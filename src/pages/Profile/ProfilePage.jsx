@@ -1,50 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/auth-context';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, isAdmin, userEvolution, updateUserProfile, logout } = useAuth();
+  const { user, isAdmin, userEvolution, updateUserProfile } = useAuth();
 
   const [activeTab, setActiveTab] = useState('dados');
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [phone, setPhone] = useState('');
-  const [campus, setCampus] = useState('Maceió');
+  const [photoUrl, setPhotoUrl] = useState(user?.avatar || '');
+  const [name, setName] = useState(user?.name || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [campus, setCampus] = useState(user?.campus || 'Maceió');
 
   // Preferências
-  const [preferredAreas, setPreferredAreas] = useState({
+  const [preferredAreas, setPreferredAreas] = useState(user?.preferences?.areas || {
     tecnologia: true,
     exatas: false,
     biologicas: false,
     gestao: true,
   });
 
-  const [preferredModalities, setPreferredModalities] = useState({
+  const [preferredModalities, setPreferredModalities] = useState(user?.preferences?.modalities || {
     tecnico: true,
     bacharelado: false,
     licenciatura: false,
     tecnologo: true,
   });
 
-  const [savedMessage, setSavedMessage] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setPhotoUrl(user.avatar || '');
-      setBio(user.bio || '');
-      setPhone(user.phone || '');
-      setCampus(user.campus || 'Maceió');
-      if (user.preferences) {
-        if (user.preferences.areas) setPreferredAreas(user.preferences.areas);
-        if (user.preferences.modalities) setPreferredModalities(user.preferences.modalities);
-      }
-    }
-  }, [user]);
+  const [saving, setSaving] = useState(false);
 
   if (!user) {
     return (
@@ -62,21 +48,26 @@ export default function ProfilePage() {
 
   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    updateUserProfile({
-      name,
-      avatar: photoUrl,
-      bio,
-      phone,
-      campus,
-      preferences: {
-        areas: preferredAreas,
-        modalities: preferredModalities,
-      },
-    });
-    setSavedMessage('✅ Dados do perfil atualizados com sucesso!');
-    setTimeout(() => setSavedMessage(''), 4000);
+    setSaving(true);
+    try {
+      await updateUserProfile({
+        name,
+        avatar: photoUrl,
+        bio,
+        phone,
+        campus,
+        preferences: {
+          areas: preferredAreas,
+          modalities: preferredModalities,
+        },
+      });
+    } catch {
+      // O contexto já apresenta a mensagem de erro ao usuário.
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleArea = (key) => {
@@ -156,12 +147,6 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {savedMessage && (
-          <div className="profile-alert-success">
-            {savedMessage}
-          </div>
-        )}
-
         {/* Conteúdo das Abas */}
         <div className="profile-card">
           {activeTab === 'dados' && (
@@ -235,8 +220,8 @@ export default function ProfilePage() {
               </div>
 
               <div className="profile-form-actions">
-                <button type="submit" className="btn-save-profile">
-                  💾 Salvar Dados Pessoais
+                <button type="submit" className="btn-save-profile" disabled={saving}>
+                  {saving ? 'Salvando...' : '💾 Salvar Dados Pessoais'}
                 </button>
               </div>
             </form>
@@ -326,8 +311,8 @@ export default function ProfilePage() {
               </div>
 
               <div className="profile-form-actions" style={{ marginTop: '32px' }}>
-                <button type="submit" className="btn-save-profile">
-                  🎯 Salvar Preferências
+                <button type="submit" className="btn-save-profile" disabled={saving}>
+                  {saving ? 'Salvando...' : '🎯 Salvar Preferências'}
                 </button>
               </div>
             </form>

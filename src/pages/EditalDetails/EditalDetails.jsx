@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchEditalById } from "../../services/edital";
 import { ButtonVoltar } from "../../components";
@@ -10,6 +11,10 @@ function EditalDetails() {
 
   const [edital, setEdital] = useState(null);
   const [loading, setLoading] = useState(true);
+  const safeContent = useMemo(
+    () => DOMPurify.sanitize(edital?.content || ""),
+    [edital?.content]
+  );
 
   useEffect(() => {
     fetchEditalById(id)
@@ -62,10 +67,10 @@ function EditalDetails() {
         <div className="edict-right-col">
           <div className="edict-text-content">
             <p>{edital.description}</p>
-            {edital.content && (
+            {safeContent && (
               <div
                 className="edict-html-content mt-6"
-                dangerouslySetInnerHTML={{ __html: edital.content }}
+                dangerouslySetInnerHTML={{ __html: safeContent }}
               />
             )}
           </div>

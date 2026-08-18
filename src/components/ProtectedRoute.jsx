@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/auth-context";
 
 export default function ProtectedRoute({ children, adminOnly = false }) {
   const { user, isAdmin, loading } = useAuth();

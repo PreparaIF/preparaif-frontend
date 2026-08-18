@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/auth-context";
 import "../Login/LoginPage.css"; // Reaproveita os estilos do Login
 
 export default function RegisterPage() {
@@ -50,6 +50,8 @@ export default function RegisterPage() {
               type="text"
               className="login-input"
               placeholder="Seu nome"
+              aria-label="Nome completo"
+              autoComplete="name"
               value={name}
               onChange={(e) => { setName(e.target.value); setError(""); }}
               autoFocus
@@ -66,6 +68,8 @@ export default function RegisterPage() {
               type="email"
               className="login-input"
               placeholder="E-mail"
+              aria-label="E-mail"
+              autoComplete="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setError(""); }}
               required
@@ -81,6 +85,9 @@ export default function RegisterPage() {
               type="password"
               className="login-input"
               placeholder="Senha"
+              aria-label="Senha"
+              autoComplete="new-password"
+              minLength={8}
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(""); }}
               required
@@ -88,7 +95,7 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <div className="login-error">
+            <div className="login-error" role="alert">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="8" x2="12" y2="12" />

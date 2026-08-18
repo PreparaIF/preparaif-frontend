@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadDocumento } from '../../services/upload';
-import { fetchCourses } from '../../services/courses';
-import { fetchEditais } from '../../services/edital';
-import { fetchExams } from '../../services/exams';
+import { fetchCourses, saveCourse } from '../../services/courses';
+import { fetchEditais, saveEdital } from '../../services/edital';
+import { fetchAdminExams, saveExam } from '../../services/exams';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './AdminPage.css';
 
@@ -67,7 +67,7 @@ export default function AdminPage() {
         const [courses, editais, exams] = await Promise.all([
           fetchCourses(true),
           fetchEditais(true),
-          fetchExams(true),
+          fetchAdminExams(),
         ]);
         if (isSubscribed) {
           setDbCourses(courses || []);
@@ -227,11 +227,12 @@ export default function AdminPage() {
     try {
       if (activeTab === 'prova' && result.questoes) {
         const examPayload = {
-          id: isEditingExisting ? editingId : undefined,
           title: formData.titulo_personalizado || result.title || `Prova ${formData.ano || ''} Exame ${formData.exame_num || ''}`.trim(),
+          year: Number(formData.ano || result.year) || null,
+          examType: result.examType || formData.exame_num || null,
           questions: result.questoes.map((q, idx) => ({
-            id: q.id || idx + 1,
             number: q.number || q.numero_questao || idx + 1,
+            text: q.text || q.enunciado || q.statement || '',
             supportText: q.supportText || q.texto_apoio || q.texto_de_apoio || '',
             imageUrl: q.imageUrl || q.imagem_url || q.image || '',
             credits: q.credits || q.creditos || q.source || '',
@@ -245,17 +246,17 @@ export default function AdminPage() {
         await saveExam(examPayload, isEditingExisting, editingId);
       } else if (activeTab === 'edital' && result.edital) {
         const editalPayload = {
-          id: isEditingExisting ? editingId : undefined,
           title: result.edital.title || formData.titulo_personalizado || 'Edital sem título',
           description: result.edital.description || '',
           content: result.edital.content || '',
           time: result.edital.time || 'Avisos e Editais',
-          courses: result.edital.courses || [],
+          instituteName: result.edital.instituteName || formData.instituteName || 'IFAL',
+          instituteLogo: result.edital.instituteLogo || '',
+          courseId: result.edital.courses?.[0] || result.edital.courseId || null,
         };
         await saveEdital(editalPayload, isEditingExisting, editingId);
       } else if (activeTab === 'curso' && result.course) {
         const coursePayload = {
-          id: isEditingExisting ? editingId : undefined,
           title: result.course.title || formData.titulo_personalizado || 'Curso sem nome',
           description: result.course.description || '',
           campus: result.course.campus || '',
@@ -282,7 +283,7 @@ export default function AdminPage() {
       const [courses, editais, exams] = await Promise.all([
         fetchCourses(true),
         fetchEditais(true),
-        fetchExams(true),
+        fetchAdminExams(),
       ]);
       setDbCourses(courses || []);
       setDbEditais(editais || []);
@@ -430,9 +431,7 @@ export default function AdminPage() {
       if (!prev || !prev.edital) return prev;
       const currentCourses = prev.edital.courses || [];
       const exists = currentCourses.includes(courseId);
-      const updated = exists
-        ? currentCourses.filter((id) => id !== courseId)
-        : [...currentCourses, courseId];
+      const updated = exists ? [] : [courseId];
       return { ...prev, edital: { ...prev.edital, courses: updated } };
     });
   };
@@ -447,7 +446,9 @@ export default function AdminPage() {
   const toggleCourseEdital = (editalId) => {
     setResult((prev) => {
       if (!prev || !prev.course) return prev;
-      const currentEditals = prev.course.editals || [];
+      const currentEditals = (prev.course.editals || []).map((edital) =>
+        typeof edital === 'object' ? edital.id : edital
+      );
       const exists = currentEditals.includes(editalId);
       const updated = exists
         ? currentEditals.filter((id) => id !== editalId)
@@ -461,13 +462,19 @@ export default function AdminPage() {
     setIsEditingExisting(true);
     setEditingId(item.id);
     setFormData({
-      ano: item.title.match(/\d{4}/)?.[0] || '',
-      exame_num: item.title.match(/exame\s*(\d+)/i)?.[1] || '01',
+      ano: item.year || item.title.match(/\d{4}/)?.[0] || '',
+      exame_num: item.examType || item.title.match(/exame\s*(\d+)/i)?.[1] || '01',
       texto: '',
       titulo_personalizado: item.title,
       instituteName: 'IFAL',
     });
-    setResult({ id: item.id, title: item.title, questoes: item.questions || [] });
+    setResult({
+      id: item.id,
+      title: item.title,
+      year: item.year,
+      examType: item.examType,
+      questoes: item.questions || [],
+    });
     setMessage({ type: 'success', text: `Prova "${item.title}" carregada do banco.` });
   };
 
@@ -482,7 +489,7 @@ export default function AdminPage() {
       titulo_personalizado: item.title,
       instituteName: 'IFAL',
     });
-    setResult({ edital: { ...item } });
+    setResult({ edital: { ...item, courses: item.courseId ? [item.courseId] : [] } });
     setMessage({ type: 'success', text: `Edital "${item.title}" carregado do banco.` });
   };
 
@@ -507,7 +514,9 @@ export default function AdminPage() {
         modality: item.course.specs?.modalidade || 'Presencial',
         duration: item.course.specs?.duracao || '4 anos',
         degree: item.course.specs?.titulo || 'Técnico / Bacharel',
-        editals: item.course.editals || item.course.edicts || [],
+        editals: (item.course.editals || item.course.edicts || []).map((edital) =>
+          typeof edital === 'object' ? edital.id : edital
+        ),
       }
     });
     setMessage({ type: 'success', text: `Curso "${item.course.name}" carregado do banco.` });

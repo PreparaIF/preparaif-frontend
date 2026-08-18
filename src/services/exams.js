@@ -8,6 +8,7 @@ function mapExam(exam) {
     title: exam.title,
     year: exam.year || null,
     examType: exam.examType || null,
+    questionCount: exam.questionCount ?? exam.questions?.length ?? 0,
     questions: (exam.questions || []).map((q, idx) => ({
       id: q.id,
       number: q.number || idx + 1,
@@ -43,6 +44,11 @@ export async function fetchExams(forceRefresh = false) {
 export async function fetchExamById(id) {
   const data = await apiGet(`/exams/${id}`);
   return mapExam(data);
+}
+
+export async function fetchAdminExams() {
+  const data = await apiGet("/exams/admin/all");
+  return Array.isArray(data) ? data.map(mapExam) : [];
 }
 
 export function clearExamsCache() {
