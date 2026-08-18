@@ -34,7 +34,12 @@ export async function apiFetch(path, options = {}) {
     delete mergedHeaders["content-type"];
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
+  let cleanPath = path;
+  if (API_URL.endsWith("/api") && cleanPath.startsWith("/api/")) {
+    cleanPath = cleanPath.replace(/^\/api/, "");
+  }
+
+  const response = await fetch(`${API_URL}${cleanPath}`, {
     ...options,
     headers: mergedHeaders,
   });

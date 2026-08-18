@@ -177,17 +177,17 @@ export default function AdminPage() {
     let isSubscribed = true;
     const loadAll = async () => {
       try {
-        const [courses, editais, exams, prefs] = await Promise.all([
+        const [coursesRes, editaisRes, examsRes, prefsRes] = await Promise.allSettled([
           fetchCourses(true),
           fetchEditais(true),
           fetchAdminExams(),
           fetchPreferences(),
         ]);
         if (isSubscribed) {
-          setDbCourses(courses || []);
-          setDbEditais(editais || []);
-          setDbExams(exams || []);
-          setDbPreferences(prefs || []);
+          if (coursesRes.status === 'fulfilled') setDbCourses(coursesRes.value || []);
+          if (editaisRes.status === 'fulfilled') setDbEditais(editaisRes.value || []);
+          if (examsRes.status === 'fulfilled') setDbExams(examsRes.value || []);
+          if (prefsRes.status === 'fulfilled') setDbPreferences(prefsRes.value || []);
         }
       } catch (err) {
         console.error("Erro ao carregar dados do banco:", err);
@@ -772,9 +772,9 @@ export default function AdminPage() {
             onClick={() => handleTabChange('editar')}
           >
             <span className="sidebar-tab-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-              <Edit size={18} /> Editar Registros
+              <Database size={18} /> Gerenciar Banco
             </span>
-            <span className="sidebar-tab-desc">Consulte e edite dados do banco</span>
+            <span className="sidebar-tab-desc">Consulte, edite ou exclua dados</span>
           </button>
           <button
             className={`sidebar-tab ${activeTab === 'preferencias' ? 'active' : ''}`}
@@ -921,12 +921,12 @@ export default function AdminPage() {
             </div>
           )}
 
-          {activeTab === 'editar' ? (
+          {activeTab === 'editar' && (
             <div className="admin-form-card">
               <div className="form-card-header">
-                <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Edit size={22} color="#00875F" /> Registros do Banco de Dados</h2>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Database size={22} color="#00875F" /> Registros do Banco de Dados</h2>
                 <span className="form-card-hint">
-                  Clique na categoria para expandir ou digite na pesquisa para filtrar automaticamente.
+                  Consulte, edite ou exclua provas, editais e cursos cadastrados no banco.
                 </span>
               </div>
 
@@ -1062,7 +1062,9 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {(activeTab === 'prova' || activeTab === 'edital' || activeTab === 'curso') && (
             <form className="admin-form-card" onSubmit={handleSubmit}>
               <div className="form-card-header">
                 <div className="form-card-header-main">
