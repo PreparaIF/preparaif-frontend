@@ -1,29 +1,5 @@
 import { apiFetch } from "./api";
 
-const ATTEMPTS_STORAGE_KEY = "preparaif_user_attempts";
-
-function getLocalAttempts(userId) {
-  try {
-    const all = JSON.parse(localStorage.getItem(ATTEMPTS_STORAGE_KEY)) || {};
-    return all[userId] || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalAttempt(userId, attempt) {
-  try {
-    const all = JSON.parse(localStorage.getItem(ATTEMPTS_STORAGE_KEY)) || {};
-    const uKey = userId || "default_user";
-    if (!all[uKey]) all[uKey] = [];
-    all[uKey].push(attempt);
-    localStorage.setItem(ATTEMPTS_STORAGE_KEY, JSON.stringify(all));
-    return attempt;
-  } catch (err) {
-    console.error("Erro ao salvar tentativa local:", err);
-  }
-}
-
 export function calculateUserEvolution(attempts = []) {
   if (!attempts || attempts.length === 0) {
     return {
@@ -82,35 +58,18 @@ export function calculateUserEvolution(attempts = []) {
   };
 }
 
-export async function apiSaveAttempt(token, data, userId) {
-  try {
-    return await apiFetch("/attempts", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
-    });
-  } catch (err) {
-    const attempt = {
-      id: Date.now(),
-      examId: data.examId,
-      score: data.score,
-      total: data.total,
-      percentage: Math.round(((data.score || 0) / (data.total || 1)) * 100),
-      completedAt: new Date().toISOString(),
-    };
-    saveLocalAttempt(userId, attempt);
-    return attempt;
-  }
+export async function apiSaveAttempt(token, data) {
+  return await apiFetch("/attempts", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
 }
 
-export async function apiGetMyAttempts(token, userId) {
-  try {
-    return await apiFetch("/attempts/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  } catch (err) {
-    return getLocalAttempts(userId);
-  }
+export async function apiGetMyAttempts(token) {
+  return await apiFetch("/attempts/me", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export async function apiGetAllAttempts(token) {

@@ -1,50 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/auth-context';
 import ButtonVoltar from '../../components/Utils/ButtonVoltar';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, isAdmin, userEvolution, updateUserProfile, logout } = useAuth();
+  const { user, isAdmin, userEvolution, updateUserProfile } = useAuth();
 
   const [activeTab, setActiveTab] = useState('dados');
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [phone, setPhone] = useState('');
-  const [campus, setCampus] = useState('Maceió');
+  const [photoUrl, setPhotoUrl] = useState(user?.avatar || '');
+  const [name, setName] = useState(user?.name || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [campus, setCampus] = useState(user?.campus || 'Maceió');
 
   // Preferências
-  const [preferredAreas, setPreferredAreas] = useState({
+  const [preferredAreas, setPreferredAreas] = useState(user?.preferences?.areas || {
     tecnologia: true,
     exatas: false,
     biologicas: false,
     gestao: true,
   });
 
-  const [preferredModalities, setPreferredModalities] = useState({
+  const [preferredModalities, setPreferredModalities] = useState(user?.preferences?.modalities || {
     tecnico: true,
     bacharelado: false,
     licenciatura: false,
     tecnologo: true,
   });
 
-  const [savedMessage, setSavedMessage] = useState('');
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setPhotoUrl(user.avatar || '');
-      setBio(user.bio || '');
-      setPhone(user.phone || '');
-      setCampus(user.campus || 'Maceió');
-      if (user.preferences) {
-        if (user.preferences.areas) setPreferredAreas(user.preferences.areas);
-        if (user.preferences.modalities) setPreferredModalities(user.preferences.modalities);
-      }
-    }
-  }, [user]);
+  const [saving, setSaving] = useState(false);
 
   if (!user) {
     return (
@@ -62,21 +48,26 @@ export default function ProfilePage() {
 
   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    updateUserProfile({
-      name,
-      avatar: photoUrl,
-      bio,
-      phone,
-      campus,
-      preferences: {
-        areas: preferredAreas,
-        modalities: preferredModalities,
-      },
-    });
-    setSavedMessage('✅ Dados do perfil atualizados com sucesso!');
-    setTimeout(() => setSavedMessage(''), 4000);
+    setSaving(true);
+    try {
+      await updateUserProfile({
+        name,
+        avatar: photoUrl,
+        bio,
+        phone,
+        campus,
+        preferences: {
+          areas: preferredAreas,
+          modalities: preferredModalities,
+        },
+      });
+    } catch {
+      // O contexto já apresenta a mensagem de erro ao usuário.
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleArea = (key) => {
@@ -85,6 +76,21 @@ export default function ProfilePage() {
 
   const toggleModality = (key) => {
     setPreferredModalities((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleFileUpload = (e, setTarget) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WEBP).');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setTarget(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -114,7 +120,7 @@ export default function ProfilePage() {
             <div className="profile-badges-row">
               {isAdmin ? (
                 <span className="profile-status-tag admin">
-                  👑 Administrador do Sistema
+                  Administrador do Sistema
                 </span>
               ) : (
                 <span
@@ -156,33 +162,47 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {savedMessage && (
-          <div className="profile-alert-success">
-            {savedMessage}
-          </div>
-        )}
-
         {/* Conteúdo das Abas */}
         <div className="profile-card">
           {activeTab === 'dados' && (
             <form onSubmit={handleSaveProfile} className="profile-form">
               <div className="form-group">
-                <label>Foto de Perfil (URL da Imagem ou Avatar)</label>
-                <div className="photo-input-group">
+                <label>Foto de Perfil</label>
+                <div className="photo-upload-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="upload-btn-row" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label className="btn-upload-file" style={{ cursor: 'pointer', padding: '10px 16px', background: '#00875F', color: '#fff', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      📷 Enviar Foto do Dispositivo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleFileUpload(e, setPhotoUrl)}
+                      />
+                    </label>
+                    {photoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPhotoUrl('')}
+                        style={{ background: '#FF4D4D', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        🗑️ Remover Foto
+                      </button>
+                    )}
+                  </div>
                   <input
-                    type="url"
+                    type="text"
                     className="profile-input"
-                    placeholder="https://exemplo.com/minha-foto.png"
+                    placeholder="Ou insira a URL direta da imagem (https://...)..."
                     value={photoUrl}
                     onChange={(e) => setPhotoUrl(e.target.value)}
                   />
                   {photoUrl && (
-                    <div className="photo-preview-thumb">
-                      <img src={photoUrl} alt="Preview" onError={() => setPhotoUrl('')} />
+                    <div className="photo-preview-thumb" style={{ marginTop: '8px' }}>
+                      <img src={photoUrl} alt="Preview" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #00875F' }} onError={() => setPhotoUrl('')} />
                     </div>
                   )}
                 </div>
-                <span className="form-hint">Cole o link direto da sua foto de perfil para exibição instantânea.</span>
+                <span className="form-hint">Faça o upload de uma imagem do seu dispositivo ou insira o link direto.</span>
               </div>
 
               <div className="form-row-2col">
@@ -235,8 +255,8 @@ export default function ProfilePage() {
               </div>
 
               <div className="profile-form-actions">
-                <button type="submit" className="btn-save-profile">
-                  💾 Salvar Dados Pessoais
+                <button type="submit" className="btn-save-profile" disabled={saving}>
+                  {saving ? 'Salvando...' : '💾 Salvar Dados Pessoais'}
                 </button>
               </div>
             </form>
@@ -326,8 +346,8 @@ export default function ProfilePage() {
               </div>
 
               <div className="profile-form-actions" style={{ marginTop: '32px' }}>
-                <button type="submit" className="btn-save-profile">
-                  🎯 Salvar Preferências
+                <button type="submit" className="btn-save-profile" disabled={saving}>
+                  {saving ? 'Salvando...' : '🎯 Salvar Preferências'}
                 </button>
               </div>
             </form>

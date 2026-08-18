@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExams } from "../../services/exams";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/auth-context";
 import ButtonVoltar from "../../components/Utils/ButtonVoltar";
 import LoadingSpinner from "../../components/Utils/LoadingSpinner";
 import "./LastExams.css";
@@ -11,7 +11,6 @@ export default function LastExams() {
   const { user, openAuthModal } = useAuth();
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("todas");
 
   useEffect(() => {
     document.title = "Prepara IF - Provas Anteriores";
@@ -117,7 +116,7 @@ export default function LastExams() {
                     <div className="footer-info-group">
                       <div className="info-block">
                         <span className="info-value">
-                          {exam.questions ? exam.questions.length : 0} questões
+                          {exam.questionCount} questões
                         </span>
                         <span className="info-label">Total</span>
                       </div>

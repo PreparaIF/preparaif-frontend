@@ -10,7 +10,6 @@ export default function EditaisPage() {
   const navigate = useNavigate();
   const [editais, setEditais] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('todos');
 
   useEffect(() => {
     document.title = 'Prepara IF - Editais Anteriores';

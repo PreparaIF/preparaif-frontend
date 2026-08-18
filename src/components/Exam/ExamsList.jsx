@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchExams } from "../../services/exams";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/auth-context";
 import LoadingSpinner from "../Utils/LoadingSpinner";
 import { matchExam } from "../../utils/searchUtils";
 import "./ExamsStyle.css";

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './ToastNotification.css';
 
 export default function ToastNotification({ toast, onClose }) {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../../contexts/auth-context';
 import './AuthModal.css';
 
 export default function AuthModal() {
@@ -11,13 +11,17 @@ export default function AuthModal() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const emailInputRef = useRef(null);
 
-  // Sync tab with context mode if context changes
-  React.useEffect(() => {
-    if (authModalMode) {
-      setTab(authModalMode);
-    }
-  }, [authModalMode]);
+  useEffect(() => {
+    if (!isAuthModalOpen) return undefined;
+    emailInputRef.current?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') closeAuthModal();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [closeAuthModal, isAuthModalOpen]);
 
   if (!isAuthModalOpen) return null;
 
@@ -44,8 +48,16 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="auth-modal-overlay" onClick={closeAuthModal}>
-      <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="auth-modal-overlay"
+      onMouseDown={(event) => event.target === event.currentTarget && closeAuthModal()}
+    >
+      <div
+        className="auth-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+      >
         <button className="auth-modal-close" onClick={closeAuthModal} aria-label="Fechar">
           ✕
         </button>
@@ -56,7 +68,7 @@ export default function AuthModal() {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          <h2>{tab === 'login' ? 'Acessar Conta' : 'Criar sua Conta'}</h2>
+          <h2 id="auth-modal-title">{tab === 'login' ? 'Acessar Conta' : 'Criar sua Conta'}</h2>
           <p className="auth-modal-subtitle">
             {tab === 'login'
               ? 'Entre para acompanhar seu desempenho nas provas do IFAL.'
@@ -69,6 +81,7 @@ export default function AuthModal() {
             type="button"
             className={`auth-modal-tab ${tab === 'login' ? 'active' : ''}`}
             onClick={() => { setTab('login'); setError(''); }}
+            aria-selected={tab === 'login'}
           >
             Entrar
           </button>
@@ -76,6 +89,7 @@ export default function AuthModal() {
             type="button"
             className={`auth-modal-tab ${tab === 'register' ? 'active' : ''}`}
             onClick={() => { setTab('register'); setError(''); }}
+            aria-selected={tab === 'register'}
           >
             Criar Conta
           </button>
@@ -92,6 +106,8 @@ export default function AuthModal() {
                 type="text"
                 className="auth-modal-input"
                 placeholder="Seu nome"
+                aria-label="Nome completo"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -106,8 +122,11 @@ export default function AuthModal() {
             </svg>
             <input
               type="email"
+              ref={emailInputRef}
               className="auth-modal-input"
               placeholder="Seu e-mail"
+              aria-label="E-mail"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -123,6 +142,9 @@ export default function AuthModal() {
               type="password"
               className="auth-modal-input"
               placeholder="Sua senha"
+              aria-label="Senha"
+              autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+              minLength={tab === 'register' ? 8 : undefined}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -130,7 +152,7 @@ export default function AuthModal() {
           </div>
 
           {error && (
-            <div className="auth-modal-error">
+            <div className="auth-modal-error" role="alert">
               <span>⚠️</span> {error}
             </div>
           )}

@@ -6,73 +6,61 @@ function mapExam(exam) {
   return {
     id: exam.id,
     title: exam.title,
-    questions: (exam.questions || []).map((q) => ({
-      id: q.id,
-      texto_apoio: q.texto_apoio || q.text_apoio || "",
-      imagem_url: q.imagem_url || q.image || "",
-      creditos: q.creditos || q.source || "",
-      text: q.text || "",
-      options: q.options || [],
-      correctAnswerIndex: q.correctAnswerIndex ?? 0,
-    })),
+    year: exam.year || null,
+    examType: exam.examType || null,
+    questionCount: exam.questionCount ?? exam.questions?.length ?? 0,
+    questions: (exam.questions || []).map((q, idx) => {
+      const imageUrls = [
+        ...(Array.isArray(q.imageUrls) ? q.imageUrls : []),
+        ...(Array.isArray(q.images) ? q.images : []),
+        ...(Array.isArray(q.imagens) ? q.imagens : []),
+      ].filter((url, imageIndex, all) => typeof url === "string" && url && all.indexOf(url) === imageIndex);
+      const primaryImage = q.imageUrl || q.imagem_url || q.image || imageUrls[0] || "";
+      if (primaryImage && !imageUrls.includes(primaryImage)) imageUrls.unshift(primaryImage);
+
+      return {
+        id: q.id,
+        number: q.number || idx + 1,
+        numero_questao: q.number || idx + 1,
+        texto_apoio: q.supportText || q.texto_apoio || q.text_apoio || "",
+        texto_de_apoio: q.supportText || q.texto_apoio || q.text_apoio || "",
+        supportText: q.supportText || q.texto_apoio || q.text_apoio || "",
+        imagem_url: primaryImage,
+        imageUrl: primaryImage,
+        imageUrls,
+        images: imageUrls,
+        creditos: q.credits || q.creditos || q.source || "",
+        credits: q.credits || q.creditos || q.source || "",
+        text: q.text || q.statement || "",
+        enunciado: q.text || q.statement || "",
+        statement: q.text || q.statement || "",
+        options: Array.isArray(q.options) ? q.options : [],
+        opcoes: Array.isArray(q.options) ? q.options : [],
+        correctAnswerIndex: q.correctAnswerIndex ?? null,
+        gabarito: q.correctAnswerIndex ?? null,
+        status: q.status || (q.correctAnswerIndex !== null ? "VALID" : "UNKNOWN"),
+      };
+    }),
   };
 }
-
-const FALLBACK_EXAMS = [
-  {
-    id: 1,
-    title: "Exame de Seleção 2025 - Ensino Técnico Integrado",
-    questions: [
-      {
-        id: 101,
-        text: "Qual é a principal função de um algoritmo em ciência da computação?",
-        options: [
-          "Definir a cor dos componentes da interface de usuário",
-          "Fornecer uma sequência finita de instruções bem definidas para resolver um problema",
-          "Formatar textos e tabelas em documentos impressos",
-          "Executar diagnósticos de hardware no computador",
-        ],
-        correctAnswerIndex: 1,
-      },
-    ],
-  },
-  {
-    id: 2,
-    title: "Exame de Seleção 2024 - Ensino Superior (Sistemas)",
-    questions: [
-      {
-        id: 201,
-        text: "Em orientação a objetos, o conceito que permite a uma classe reutilizar atributos e métodos de outra classe é chamado de:",
-        options: ["Polimorfismo", "Encapsulamento", "Herança", "Abstração"],
-        correctAnswerIndex: 2,
-      },
-    ],
-  },
-];
 
 export async function fetchExams(forceRefresh = false) {
   if (examsCache && !forceRefresh) {
     return examsCache;
   }
-  try {
-    const data = await apiGet("/exams");
-    examsCache = data.map(mapExam);
-    return examsCache;
-  } catch (err) {
-    console.warn("Erro ao buscar exames do backend, utilizando dados de demonstração:", err);
-    examsCache = FALLBACK_EXAMS;
-    return examsCache;
-  }
+  const data = await apiGet("/exams");
+  examsCache = Array.isArray(data) ? data.map(mapExam) : [];
+  return examsCache;
 }
 
 export async function fetchExamById(id) {
-  if (examsCache) {
-    const found = examsCache.find((c) => String(c.id) === String(id));
-    if (found) return found;
-  }
-
   const data = await apiGet(`/exams/${id}`);
   return mapExam(data);
+}
+
+export async function fetchAdminExams() {
+  const data = await apiGet("/exams/admin/all");
+  return Array.isArray(data) ? data.map(mapExam) : [];
 }
 
 export function clearExamsCache() {
